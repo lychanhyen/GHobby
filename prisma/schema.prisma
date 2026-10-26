@@ -1,0 +1,98 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  passwordHash       String
+  fullName           String
+  role               String   @default("ADMIN")
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+}
+
+model Product {
+  id                  String         @id @default(uuid())
+  sku                 String         @unique
+  name                String
+  slug                String         @unique
+  categoryId          String
+  category            Category       @relation(fields: [categoryId], references: [id])
+  brand               String         // Bandai, Kotobukiya, Daban...
+  scale               String         // 1/144, 1/100, 1/60, Non-scale...
+  series              String         // Universal Century, Seed, 00, WfM...
+  costPrice           Int            // Giá vốn (VND)
+  sellingPrice        Int            // Giá bán (VND)
+  stockQuantity       Int            @default(0) // Số lượng tồn kho
+  minStockAlert       Int            @default(2) // Ngưỡng cảnh báo sắp hết
+  productType         String         @default("IN_STOCK") // IN_STOCK, PRE_ORDER
+  expectedReleaseDate String?        // Dành cho hàng Pre-order (vd: "Tháng 12/2026")
+  preOrderCount       Int            @default(0) // Số lượng khách đã đặt cọc
+  imageUrl            String
+  description         String
+  isActive            Boolean        @default(true) // Ẩn / Hiện (Soft delete)
+  orderItems          OrderItem[]
+  inventoryLogs       InventoryLog[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+}
+
+model InventoryLog {
+  id           String   @id @default(uuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  changeType   String   // IMPORT, EXPORT_MANUAL, ORDER_DEDUCT, ORDER_CANCEL_RESTOCK, ADJUST, DAMAGED, WARRANTY
+  quantity     Int      // Số lượng tăng (+) hoặc giảm (-)
+  balanceAfter Int      // Tồn kho sau biến động
+  costPrice    Int?     // Giá vốn tại thời điểm nhập
+  note         String?  // Lý do biến động hoặc mã đơn hàng
+  createdBy    String   // Người thực hiện (Admin)
+  createdAt    DateTime @default(now())
+}
+
+model Order {
+  id                 String      @id @default(uuid())
+  orderCode          String      @unique // Mã đơn: GHB-XXXXXX
+  customerName       String
+  customerPhone      String
+  customerAddress    String
+  shippingZone       String      // INNER_CITY (Đà Nẵng - Zalo), OUTER_CITY (Liên tỉnh - 20.000đ)
+  shippingFee        Int         // 0 hoặc 20000
+  totalProductAmount Int         // Tổng tiền hàng
+  depositRequired    Int         // Số tiền cọc 10% tính trên tổng tiền hàng
+  depositPaid        Boolean     @default(false) // Trạng thái đã cọc
+  isRestocked        Boolean     @default(false) // Cờ đảm bảo chỉ hoàn kho đúng 1 lần
+  status             String      @default("PENDING_DEPOSIT") // PENDING_DEPOSIT, CONFIRMED, SHIPPING, COMPLETED, CANCELLED
+  note               String?
+  items              OrderItem[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  productName String
+  price       Int
+  quantity    Int
+}

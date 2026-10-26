@@ -1,0 +1,85 @@
+import Link from "next/link";
+import { SAMPLE_CATEGORIES } from "@/data/sample-products";
+
+export default function Footer() {
+  return (
+    <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 mt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Col 1: Shop Intro */}
+          <div className="md:col-span-1">
+            <span className="text-xl font-extrabold tracking-tight text-white block mb-3">
+              GHOBBY<span className="text-red-500">.VN</span>
+            </span>
+            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+              Cửa hàng chuyên phân phối mô hình Gunpla Bandai chính hãng (HG, RG, MG, PG), Figure anime cao cấp và phụ kiện mô hình tại Đà Nẵng & giao hàng toàn quốc.
+            </p>
+            <div className="text-xs text-slate-500">
+              <p>📍 Địa chỉ: Quận Hải Châu, TP. Đà Nẵng</p>
+              <p>📞 Hotline/Zalo: 0905.123.456</p>
+              <p>⏰ Mở cửa: 09:00 - 21:00 hàng ngày</p>
+            </div>
+          </div>
+
+          {/* Col 2: Categories */}
+          <div>
+            <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
+              Dòng Sản Phẩm
+            </h3>
+            <ul className="space-y-2 text-sm">
+              {SAMPLE_CATEGORIES.map((cat) => (
+                <li key={cat.id}>
+                  <Link
+                    href={`/danh-muc/${cat.slug}`}
+                    className="hover:text-white transition-colors"
+                  >
+                    {cat.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Col 3: Policy */}
+          <div>
+            <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
+              Chính Sách & Thanh Toán
+            </h3>
+            <ul className="space-y-2 text-sm">
+              <li>🚚 Giao hàng: Ngoại thành 20K | Nội thành Đà Nẵng hỏa tốc Zalo</li>
+              <li>💳 Cọc 10%: Quét VietQR tài khoản ngân hàng MB tiện lợi</li>
+              <li>🛡️ Cam kết: 100% hàng chính hãng Bandai Spirits (Nhật Bản)</li>
+              <li>📦 Đóng gói: Thùng carton 3-5 lớp, bóng khí chống móp hộp kit</li>
+            </ul>
+          </div>
+
+          {/* Col 4: Bank QR notice */}
+          <div>
+            <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
+              Tài Khoản Nhận Cọc
+            </h3>
+            <div className="bg-slate-900 border border-slate-800 p-3 rounded-lg text-xs space-y-1">
+              <p className="font-semibold text-slate-200">Ngân hàng: Quân Đội (MB Bank)</p>
+              <p>Chủ TK: SHOP MO HINH GHOBBY</p>
+              <p>Mã VietQR tự động sinh khi đặt đơn</p>
+              <p className="text-amber-400 text-[11px] pt-1">
+                * Đơn hàng có sẵn & Pre-order chỉ cọc 10% tiền hàng.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-slate-900 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
+          <p>© {new Date().getFullYear()} GHobby.vn. Tất cả các quyền được bảo lưu.</p>
+          <div className="mt-4 md:mt-0 space-x-4">
+            <span>Chuẩn SEO Google</span>
+            <span>•</span>
+            <span>Quản Lý Kho Chống Âm</span>
+            <span>•</span>
+            <span>Thanh Toán VietQR Napas247</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
