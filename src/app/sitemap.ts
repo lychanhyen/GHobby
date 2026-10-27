@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
   // 1. Các đường dẫn tĩnh
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -12,17 +12,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // 2. Lấy danh mục từ DB
-  const categories = await prisma.category.findMany({ select: { slug: true, updatedAt: true } });
+  const categories = await prisma.category.findMany({
+    select: { slug: true },
+  });
   const categoryRoutes: MetadataRoute.Sitemap = categories.map((cat) => ({
     url: `${baseUrl}/danh-muc/${cat.slug}`,
-    lastModified: cat.updatedAt,
+    lastModified: new Date(),
   }));
 
   // 3. Lấy sản phẩm từ DB
-  const products = await prisma.product.findMany({ select: { slug: true, updatedAt: true } });
+  const products = await prisma.product.findMany({
+    where: { isActive: true },
+    select: { slug: true, updatedAt: true },
+  });
   const productRoutes: MetadataRoute.Sitemap = products.map((prod) => ({
     url: `${baseUrl}/san-pham/${prod.slug}`,
-    lastModified: prod.updatedAt,
+    lastModified: prod.updatedAt || new Date(),
   }));
 
   return [...staticRoutes, ...categoryRoutes, ...productRoutes];

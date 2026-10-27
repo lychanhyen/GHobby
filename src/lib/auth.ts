@@ -127,5 +127,5 @@ export function getClientIp(req: NextRequest): string {
   if (realIp) {
     return realIp;
   }
-  return req.ip || "unknown";
+  return "unknown";
 }
