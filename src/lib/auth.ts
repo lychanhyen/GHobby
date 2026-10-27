@@ -146,19 +146,8 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function checkLoginAttempts(ipAddress: string, username: string): Promise<boolean> {
-  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-  const attempts = await prisma.loginAttempt.count({
-    where: {
-      OR: [
-        { ipAddress, createdAt: { gte: fifteenMinutesAgo } },
-        { username, createdAt: { gte: fifteenMinutesAgo } },
-      ],
-      isSuccess: false,
-    },
-  });
-
-  // Block if more than 5 failed attempts in 15 minutes
-  return attempts < 5;
+  // Temporarily disabled: no login lock after failed attempts
+  return true;
 }
 
 export async function recordLoginAttempt(ipAddress: string, username: string, isSuccess: boolean) {

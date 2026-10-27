@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     if (!canAttempt) {
       await recordLoginAttempt(ipAddress, username, false);
       return NextResponse.json(
-        { success: false, message: "Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau 15 phút." },
+        { success: false, message: "Tài khoản hoặc mật khẩu không đúng." },
         { status: 429 }
       );
     }
