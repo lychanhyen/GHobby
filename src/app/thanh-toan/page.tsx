@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("DELIVERY");
+  const [expressType, setExpressType] = useState<"pickup" | "under3km" | "over3km">("under3km");
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
@@ -146,6 +147,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           ...formData,
           shippingMethod,
+          expressType: expressType,
           items: items.map((item) => ({
             productId: item.product.id,
             quantity: item.quantity,

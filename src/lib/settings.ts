@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
     .split(",")
     .map((d) => d.trim())
     .filter(Boolean),
+  expressRadiusKm: Number(process.env.NEXT_PUBLIC_EXPRESS_RADIUS_KM) || 3,
 };
 
 export async function getStoreSettings(): Promise<StoreSettings> {
@@ -34,6 +35,9 @@ export async function getStoreSettings(): Promise<StoreSettings> {
         } else if (setting.key === "shipping_config") {
           if (parsed.outerCityShippingFee !== undefined && parsed.outerCityShippingFee !== null) {
             merged.outerCityShippingFee = Number(parsed.outerCityShippingFee) || merged.outerCityShippingFee;
+          }
+          if (parsed.expressRadiusKm !== undefined && parsed.expressRadiusKm !== null) {
+            merged.expressRadiusKm = Number(parsed.expressRadiusKm) || merged.expressRadiusKm || 3;
           }
           if (Array.isArray(parsed.innerCityDistricts)) {
             merged.innerCityDistricts = parsed.innerCityDistricts

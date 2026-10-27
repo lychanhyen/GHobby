@@ -69,4 +69,5 @@ export interface StoreSettings {
   bankAccountName: string;
   outerCityShippingFee: number;
   innerCityDistricts: string[];
+  expressRadiusKm?: number;
 }

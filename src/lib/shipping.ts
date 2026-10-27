@@ -20,6 +20,8 @@ export interface ShippingQuoteResult {
   shippingArea: string;
   shippingFee: number;
   note?: string;
+  requiresQuote?: boolean;
+  contactZalo?: boolean;
 }
 
 export function getShippingQuote({
@@ -33,10 +35,11 @@ export function getShippingQuote({
       isInnerCity: true,
       shippingArea: "Tại cửa hàng",
       shippingFee: 0,
-      note: "Nhận tại cửa hàng",
+      note: "Nhận tại cửa hàng - Miễn phí",
     };
   }
 
+  // For delivery - check if inner city (for express/free under radius logic handled by UI)
   const innerDistricts = settings.innerCityDistricts || [];
   if (innerDistricts.length === 0) {
     return {
@@ -54,8 +57,7 @@ export function getShippingQuote({
       return {
         isInnerCity: true,
         shippingArea: "Nội thành",
-        shippingFee: 0,
-        note: "Shop sẽ liên hệ báo phí ship hỏa tốc qua Zalo",
+        shippingFee: Number(settings.outerCityShippingFee) || 20000,
       };
     }
   }

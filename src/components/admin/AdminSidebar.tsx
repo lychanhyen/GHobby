@@ -13,6 +13,7 @@ import {
   Warehouse,
   History,
   Settings,
+  TrendingUp,
 } from "lucide-react";
 
 const menuItems = [

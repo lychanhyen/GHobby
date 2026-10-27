@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
       shipping_config: {
         outerCityShippingFee: Number(process.env.NEXT_PUBLIC_OUTER_CITY_SHIPPING_FEE) || 20000,
         innerCityDistricts: (process.env.NEXT_PUBLIC_INNER_CITY_DISTRICTS || "").split(",").filter(Boolean),
+        expressRadiusKm: Number(process.env.NEXT_PUBLIC_EXPRESS_RADIUS_KM) || 3,
       },
       general_config: {
         shopName: process.env.NEXT_PUBLIC_SHOP_NAME || "GHobby",

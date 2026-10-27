@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Package, AlertTriangle, Plus, History, Edit } from "lucide-react";
+import { Package, AlertTriangle, Plus, History, Edit, FileText, Upload, X } from "lucide-react";
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -11,11 +11,18 @@ export default function InventoryPage() {
   const [filter, setFilter] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [importData, setImportData] = useState({ quantity: 0, note: "" });
+  const [importData, setImportData] = useState({ quantity: 0, note: "", costPrice: 0 });
   const [adjustData, setAdjustData] = useState({ newStock: 0, note: "" });
   const [processing, setProcessing] = useState(false);
+
+  // Bulk import state
+  const [bulkTab, setBulkTab] = useState<"paste" | "csv">("paste");
+  const [pasteText, setPasteText] = useState("");
+  const [bulkItems, setBulkItems] = useState<any[]>([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -68,6 +75,7 @@ export default function InventoryPage() {
           productId: selectedProduct.id,
           quantity: importData.quantity,
           note: importData.note,
+          costPrice: importData.costPrice || undefined,
         }),
       });
 
@@ -75,7 +83,7 @@ export default function InventoryPage() {
       if (data.success) {
         alert("Nhập kho thành công");
         setShowImportModal(false);
-        setImportData({ quantity: 0, note: "" });
+        setImportData({ quantity: 0, note: "", costPrice: 0 });
         fetchInventory();
       } else {
         alert(data.message);
@@ -120,8 +128,78 @@ export default function InventoryPage() {
 
   const openImportModal = (product: any) => {
     setSelectedProduct(product);
-    setImportData({ quantity: 0, note: "" });
+    setImportData({ quantity: 0, note: "", costPrice: product.costPrice || 0 });
     setShowImportModal(true);
+  };
+
+  const parseBulkData = () => {
+    const lines = pasteText.split(/\r?\n/).filter(l => l.trim());
+    const items: any[] = [];
+    for (const line of lines) {
+      // Try different separators
+      let parts = line.split("|").map(p => p.trim());
+      if (parts.length < 3) {
+        parts = line.split(",").map(p => p.trim());
+      }
+      if (parts.length < 3) continue;
+      const [sku, qtyStr, priceStr, noteStr] = parts;
+      const quantity = parseInt(qtyStr);
+      const costPrice = parseInt(priceStr);
+      if (!sku || isNaN(quantity) || quantity <= 0 || isNaN(costPrice) || costPrice < 0) {
+        items.push({ sku, quantity, costPrice, note: noteStr || "", status: "invalid", message: "Dữ liệu không hợp lệ" });
+        continue;
+      }
+      const product = products.find(p => p.sku?.toLowerCase() === sku.toLowerCase());
+      if (!product) {
+        items.push({ sku, quantity, costPrice, note: noteStr || "", status: "notfound", message: "Không tìm thấy SKU" });
+        continue;
+      }
+      items.push({ sku, quantity, costPrice, note: noteStr || "", status: "valid", productName: product.name, productId: product.id });
+    }
+    setBulkItems(items);
+  };
+
+  const handleBulkImport = async () => {
+    const validItems = bulkItems.filter(i => i.status === "valid");
+    if (validItems.length === 0) {
+      alert("Không có dòng hợp lệ để nhập");
+      return;
+    }
+    setBulkProcessing(true);
+    try {
+      const res = await fetch("/api/admin/inventory/import-bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: validItems.map(i => ({ sku: i.sku, quantity: i.quantity, costPrice: i.costPrice, note: i.note })) }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        setShowBulkImportModal(false);
+        setBulkItems([]);
+        setPasteText("");
+        fetchInventory();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      alert("Có lỗi xảy ra");
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleCsvFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      setPasteText(text);
+      // Auto parse after setting
+      setTimeout(parseBulkData, 100);
+    } catch (error) {
+      alert("Không thể đọc file CSV");
+    }
   };
 
   const openAdjustModal = (product: any) => {
@@ -147,16 +225,25 @@ export default function InventoryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Quản Lý Kho</h1>
+          <h1 className="text-2xl font-black text-slate-900">Qu?n l� Kho</h1>
           <p className="text-slate-600 mt-1">Theo dõi tồn kho và lịch sử biến động</p>
         </div>
-        <Link
-          href="/admin/kho/lich-su"
-          className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-700 text-white font-bold hover:bg-slate-600"
-        >
-          <History className="w-4 h-4" />
-          <span>Lịch sử biến động</span>
-        </Link>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => { setShowBulkImportModal(true); setBulkItems([]); setPasteText(""); }}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-500"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nhập hàng loạt</span>
+          </button>
+          <Link
+            href="/admin/kho/lich-su"
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-slate-700 text-white font-bold hover:bg-slate-600"
+          >
+            <History className="w-4 h-4" />
+            <span>Lịch sử biến động</span>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -354,3 +441,4 @@ export default function InventoryPage() {
     </div>
   );
 }
+

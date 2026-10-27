@@ -23,14 +23,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { productId, quantity, note } = body;
+    const { productId, quantity, note, costPrice } = body;
 
     if (!productId || !quantity || quantity <= 0) {
       return NextResponse.json({ success: false, message: "Vui lòng nhập đầy đủ thông tin" }, { status: 400 });
     }
 
+    const parsedCostPrice = costPrice !== undefined && costPrice !== null && costPrice !== "" ? Math.max(0, parseInt(String(costPrice))) : undefined;
+
     const result = await prisma.$transaction(async (tx) => {
-      return await importStock(productId, parseInt(quantity), note, sessionData.user.id, sessionData.user.fullName, tx);
+      return await importStock(productId, parseInt(quantity), note, sessionData.user.id, sessionData.user.fullName, tx, parsedCostPrice);
     });
 
     return NextResponse.json({ success: true, message: "Nhập kho thành công", data: result });

@@ -125,6 +125,12 @@ export async function POST(req: NextRequest) {
     const sessionData = await getSession();
     const customerUserId =
       sessionData && sessionData.user.role !== "ADMIN" ? sessionData.user.id : null;
+    // For express shipping with over 3km requiring quote - check from body
+    const expressType = typeof body?.expressType === "string" ? body.expressType : null;
+    if (expressType === "over3km") {
+      throw new CheckoutValidationError("Khoảng cách giao hàng trên 3km, vui lòng nhắn Zalo để shop báo phí hỏa tốc cụ thể.");
+    }
+
     const quote = getShippingQuote({
       shippingMethod,
       provinceCity,

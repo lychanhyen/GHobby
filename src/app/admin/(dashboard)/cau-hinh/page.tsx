@@ -17,6 +17,7 @@ export default function SettingsPage() {
     shipping_config: {
       outerCityShippingFee: 20000,
       innerCityDistricts: "",
+      expressRadiusKm: 3,
     },
     general_config: {
       shopName: "GHobby",
@@ -44,6 +45,7 @@ export default function SettingsPage() {
             innerCityDistricts: Array.isArray(data.data.shipping_config?.innerCityDistricts)
               ? data.data.shipping_config.innerCityDistricts.join(",")
               : data.data.shipping_config?.innerCityDistricts || "",
+            expressRadiusKm: data.data.shipping_config?.expressRadiusKm || 3,
           },
           general_config: data.data.general_config || settings.general_config,
         });

@@ -161,7 +161,8 @@ export async function importStock(
   note?: string,
   createdById?: string,
   creatorName?: string,
-  tx?: PrismaTransaction
+  tx?: PrismaTransaction,
+  costPrice?: number
 ) {
   const client = tx || prisma;
   if (quantity <= 0) throw new Error("Số lượng phải lớn hơn 0");
@@ -172,11 +173,18 @@ export async function importStock(
 
   if (!product) throw new Error("Không tìm thấy sản phẩm");
 
+  const updateData: any = {
+    stockQuantity: { increment: quantity },
+  };
+
+  // Update product cost price to latest import price if provided
+  if (typeof costPrice === "number" && costPrice >= 0) {
+    updateData.costPrice = Math.round(costPrice);
+  }
+
   const updated = await client.product.update({
     where: { id: productId },
-    data: {
-      stockQuantity: { increment: quantity },
-    },
+    data: updateData,
   });
 
   await client.inventoryLog.create({
@@ -187,6 +195,7 @@ export async function importStock(
       quantityChange: quantity,
       stockBefore: updated.stockQuantity - quantity,
       stockAfter: updated.stockQuantity,
+      costPrice: typeof costPrice === "number" && costPrice >= 0 ? Math.round(costPrice) : product.costPrice,
       performedBy: creatorName || "Admin",
       createdById: createdById || null,
       note: note || "Nhập kho",
