@@ -7,48 +7,68 @@ import { formatCurrencyVND } from "@/lib/utils";
 interface OrderPaymentSectionProps {
   order: any;
   settings: any;
+  token?: string;
 }
 
-export default function OrderPaymentSection({ order, settings }: OrderPaymentSectionProps) {
+export default function OrderPaymentSection({ order, settings, token }: OrderPaymentSectionProps) {
   const [copied, setCopied] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(order.status === "PAYMENT_SUBMITTED");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const bankConfig = settings.bank_config || {
-    bankId: "MB",
-    bankAccount: settings.bankAccount || "",
-    bankAccountName: settings.bankAccountName || "",
+  const bankConfig = settings?.bank_config || {
+    bankId: settings?.bankId || "MB",
+    bankAccount: settings?.bankAccount || "",
+    bankAccountName: settings?.bankAccountName || "",
   };
 
   const depositAmount = order.depositRequired;
-  const bankId = bankConfig.bankId || "MB";
-  const accountNo = bankConfig.bankAccount || "";
-  const accountName = bankConfig.bankAccountName || "";
-  
+  const bankId = bankConfig.bankId || settings?.bankId || "MB";
+  const accountNo = bankConfig.bankAccount || settings?.bankAccount || "";
+  const accountName = bankConfig.bankAccountName || settings?.bankAccountName || "";
+
+  if (!accountNo || !accountName) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center space-x-2">
+          <CreditCard className="w-5 h-5 text-red-600" />
+          <span>Thanh toán tiền cọc</span>
+        </h2>
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+          Chưa cấu hình thông tin tài khoản ngân hàng. Vui lòng liên hệ shop để được hướng dẫn thanh toán.
+        </div>
+      </div>
+    );
+  }
+
   const vietQRUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${depositAmount}&addInfo=${encodeURIComponent(order.orderCode)}&accountName=${encodeURIComponent(accountName)}`;
 
   const copyToClipboard = (text: string, type: string) => {
-    navigator.clipboard.writeText(text);
+    try {
+      navigator.clipboard.writeText(text);
+    } catch {}
     setCopied(type);
     setTimeout(() => setCopied(null), 2000);
   };
 
   const handleConfirmPayment = async () => {
     setSubmitting(true);
+    setErrorMsg("");
     try {
       const res = await fetch(`/api/orders/${order.orderCode}/confirm-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(token ? { token } : {}),
       });
       const data = await res.json();
       if (data.success) {
         setSubmitted(true);
-        alert("Đã ghi nhận thông tin chuyển khoản. Vui lòng chờ admin xác nhận.");
+        setErrorMsg("");
       } else {
-        alert(data.message);
+        setErrorMsg(data.message || "Có lỗi xảy ra");
       }
     } catch (error) {
-      alert("Có lỗi xảy ra");
+      setErrorMsg("Có lỗi xảy ra");
     } finally {
       setSubmitting(false);
     }
@@ -73,6 +93,11 @@ export default function OrderPaymentSection({ order, settings }: OrderPaymentSec
           <p className="text-sm text-slate-600 mb-4">
             Vui lòng quét mã QR bên dưới để chuyển khoản tiền cọc <span className="font-bold text-red-600">{formatCurrencyVND(depositAmount)}</span>
           </p>
+          {errorMsg && (
+            <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {errorMsg}
+            </div>
+          )}
 
           <div className="flex flex-col md:flex-row gap-6 mb-6">
             <div className="flex-shrink-0">
@@ -127,6 +152,11 @@ export default function OrderPaymentSection({ order, settings }: OrderPaymentSec
             </div>
           </div>
 
+          {errorMsg && (
+            <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {errorMsg}
+            </div>
+          )}
           <button
             onClick={handleConfirmPayment}
             disabled={submitting}

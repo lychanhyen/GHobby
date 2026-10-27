@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { processImage, generateImageFileName, getPublicUrl } from "@/lib/image-processor";
 
@@ -10,9 +10,9 @@ const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const sessionData = await getSession();
+    const sessionData = await requireStaff();
     if (!sessionData) {
-      return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
+      return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
     }
 
     const formData = await req.formData();

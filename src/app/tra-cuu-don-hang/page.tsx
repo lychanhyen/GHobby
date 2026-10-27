@@ -19,11 +19,22 @@ export default function OrderLookupPage() {
     setError("");
 
     try {
-      // For simplicity, just redirect to order page
-      // In production, should verify phone
-      router.push(`/don-hang/${formData.orderCode}`);
+      const res = await fetch("/api/orders/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderCode: formData.orderCode,
+          phone: formData.phone,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.orderCode && data.data?.token) {
+        router.push(`/don-hang/${data.data.orderCode}?token=${encodeURIComponent(data.data.token)}`);
+        return;
+      }
+      setError(data.message || "Không tìm thấy đơn hàng phù hợp");
     } catch (err) {
-      setError("Có lỗi xảy ra");
+      setError("Không tìm thấy đơn hàng phù hợp");
     } finally {
       setLoading(false);
     }

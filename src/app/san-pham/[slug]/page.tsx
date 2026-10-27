@@ -4,9 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import Breadcrumb from "@/components/Breadcrumb";
 import ProductCard from "@/components/ProductCard";
+import ProductPurchaseActions from "@/components/ProductPurchaseActions";
+import WishlistButton from "@/components/WishlistButton";
 import { getProductBySlug, getRelatedProducts } from "@/lib/products";
+import { getStoreSettings } from "@/lib/settings";
 import { formatCurrencyVND } from "@/lib/utils";
-import { BASE_URL, getBreadcrumbSchema, getProductSchema, generateProductJsonLd, generateBreadcrumbJsonLd } from "@/lib/seo";
+import { BASE_URL, generateProductJsonLd, generateBreadcrumbJsonLd } from "@/lib/seo";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -23,7 +26,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   }
 
   const title = `${product.name} - ${product.scale} ${product.brand}`;
-  const description = `${product.name} chính hãng ${product.brand}. Dòng ${product.category?.name || "Gunpla"}, tỉ lệ ${product.scale}, series ${product.series}. Giá ${formatCurrencyVND(product.sellingPrice)}. GHobby Đà Nẵng ship toàn quốc 20K.`;
+  let settings;
+  try {
+    settings = await getStoreSettings();
+  } catch {
+    settings = { shopName: "GHobby Model Kit Shop" };
+  }
+  const description = `${product.name} chính hãng ${product.brand}. Dòng ${product.category?.name || "Gunpla"}, tỉ lệ ${product.scale}, series ${product.series}. Giá ${formatCurrencyVND(product.sellingPrice)}. Mua mô hình tại ${settings.shopName}, giao hàng toàn quốc.`;
   const canonicalUrl = `${BASE_URL}/san-pham/${product.slug}`;
 
   return {
@@ -58,6 +67,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   }
 
   const relatedProducts = await getRelatedProducts(product.id, product.categoryId, 4);
+  let settings;
+  try {
+    settings = await getStoreSettings();
+  } catch {
+    settings = { shopName: "GHobby Model Kit Shop", shopHotline: "0905123456" };
+  }
+  const zaloHref = `https://zalo.me/${(settings.shopHotline || "").replace(/\D/g, "")}`;
 
   const isOutOfStock = product.productType === "IN_STOCK" && product.stockQuantity <= 0;
   const isPreOrder = product.productType === "PRE_ORDER";
@@ -71,7 +87,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     { name: product.name, url: `/san-pham/${product.slug}` },
   ];
 
-  const productSchema = generateProductJsonLd(product);
+  const productSchema = generateProductJsonLd(product, settings);
   const breadcrumbSchema = generateBreadcrumbJsonLd(breadcrumbItems);
 
   return (
@@ -229,33 +245,17 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
             {/* Action Buttons */}
             <div className="pt-4 border-t border-slate-200 space-y-3">
-              {isOutOfStock ? (
-                <div className="p-4 rounded-xl bg-slate-100 text-center">
-                  <p className="text-sm font-semibold text-slate-700">
-                    Mẫu mô hình này hiện tạm thời hết hàng tại kho Đà Nẵng.
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Bạn vui lòng tham khảo các mẫu kit tương tự được gợi ý ngay bên dưới!
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href={`/gio-hang?add=${product.id}`}
-                    className="flex-1 py-3.5 px-6 rounded-xl font-bold text-sm text-center bg-red-600 text-white hover:bg-red-500 transition-colors shadow-lg shadow-red-900/30"
-                  >
-                    {isPreOrder ? "Đặt Cọc Pre-Order Ngay (10%)" : "Mua Ngay (Cọc 10%)"}
-                  </Link>
-                  <Link
-                    href="https://zalo.me"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-3.5 px-6 rounded-xl font-bold text-sm text-center bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white transition-colors"
-                  >
-                    Tư Vấn Zalo
-                  </Link>
-                </div>
-              )}
+              <ProductPurchaseActions product={product} />
+              <Link
+                href={zaloHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block py-3.5 px-6 rounded-xl font-bold text-sm text-center bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white transition-colors"
+              >
+                Tư Vấn Zalo
+              </Link>
+
+              <WishlistButton product={product} className="w-full" />
             </div>
           </div>
         </div>

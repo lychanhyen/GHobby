@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Product } from "@/types/product";
 import { formatCurrencyVND } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
-import { ShoppingCart } from "lucide-react";
+import { useWishlist } from "@/context/WishlistContext";
+import { Heart, ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -14,19 +16,33 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, priority = false }: ProductCardProps) {
   const { addItem } = useCart();
+  const { isFavorite, toggleFavorite } = useWishlist();
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const isOutOfStock = product.productType === "IN_STOCK" && product.stockQuantity <= 0;
   const isPreOrder = product.productType === "PRE_ORDER";
   const isLowStock = product.productType === "IN_STOCK" && product.stockQuantity > 0 && product.stockQuantity <= product.minStockAlert;
+  const favorite = isFavorite(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isOutOfStock) return;
-    addItem(product, 1);
-    alert("Đã thêm sản phẩm vào giỏ hàng");
+
+    const result = addItem(product, 1);
+    setFeedback(
+      result.ok
+        ? { type: "success", text: "Đã thêm sản phẩm vào giỏ hàng" }
+        : { type: "error", text: result.message || "Không thể thêm sản phẩm vào giỏ hàng" }
+    );
+  };
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(product);
   };
 
   return (
-    <article className="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+    <article className="group relative bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
       {/* Image Container with Fixed Aspect Ratio to prevent CLS */}
       <Link
         href={`/san-pham/${product.slug}`}
@@ -66,6 +82,21 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           {product.scale}
         </span>
       </Link>
+
+      <button
+        type="button"
+        onClick={handleToggleFavorite}
+        aria-pressed={favorite}
+        aria-label={favorite ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
+        title={favorite ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
+        className={`absolute top-2 right-2 z-10 p-2 rounded-full shadow-sm backdrop-blur-sm transition-colors ${
+          favorite
+            ? "bg-white text-red-600 hover:bg-red-50"
+            : "bg-white/90 text-slate-600 hover:bg-white hover:text-red-600"
+        }`}
+      >
+        <Heart className={`w-4 h-4 ${favorite ? "fill-red-600" : ""}`} />
+      </button>
 
       {/* Info Container */}
       <div className="p-4 flex-1 flex flex-col justify-between">
@@ -115,6 +146,17 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             </Link>
           )}
         </div>
+        {feedback && (
+          <p
+            role="status"
+            aria-live="polite"
+            className={`mt-2 text-[11px] font-medium ${
+              feedback.type === "success" ? "text-emerald-700" : "text-red-600"
+            }`}
+          >
+            {feedback.text}
+          </p>
+        )}
       </div>
     </article>
   );

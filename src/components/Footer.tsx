@@ -1,9 +1,17 @@
 import Link from "next/link";
-import { SAMPLE_CATEGORIES } from "@/data/sample-products";
-import { getStoreSettings } from "@/lib/settings";
 
-export default function Footer() {
-  const settings = getStoreSettings();
+interface FooterProps {
+  settings?: any;
+  categories?: any[];
+}
+
+export default function Footer({ settings, categories = [] }: FooterProps) {
+  const shopSettings = settings || {
+    shopName: process.env.NEXT_PUBLIC_SHOP_NAME || "GHobby Model Kit Shop",
+    shopAddress: process.env.NEXT_PUBLIC_SHOP_ADDRESS || "Việt Nam",
+    shopHotline: process.env.NEXT_PUBLIC_SHOP_HOTLINE || "0905.123.456",
+    outerCityShippingFee: Number(process.env.NEXT_PUBLIC_OUTER_CITY_SHIPPING_FEE) || 20000,
+  };
 
   return (
     <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 mt-16">
@@ -18,8 +26,8 @@ export default function Footer() {
               Cửa hàng chuyên phân phối mô hình Gunpla Bandai chính hãng (HG, RG, MG, PG, SD), Figure anime cao cấp và phụ kiện mô hình uy tín, giao hàng toàn quốc.
             </p>
             <div className="text-xs text-slate-500 space-y-1">
-              <p>📍 Địa chỉ: {settings.shopAddress}</p>
-              <p>📞 Hotline/Zalo: {settings.shopHotline}</p>
+              <p>📍 Địa chỉ: {shopSettings.shopAddress}</p>
+              <p>📞 Hotline/Zalo: {shopSettings.shopHotline}</p>
               <p>⏰ Mở cửa: 09:00 - 21:00 hàng ngày</p>
             </div>
           </div>
@@ -30,7 +38,7 @@ export default function Footer() {
               Dòng Sản Phẩm
             </h3>
             <ul className="space-y-2 text-sm">
-              {SAMPLE_CATEGORIES.map((cat) => (
+              {(categories || []).slice(0, 12).map((cat: any) => (
                 <li key={cat.id}>
                   <Link
                     href={`/danh-muc/${cat.slug}`}
@@ -40,6 +48,9 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              {(categories || []).length === 0 && (
+                <li className="text-slate-600 text-xs">Đang cập nhật...</li>
+              )}
             </ul>
           </div>
 
@@ -49,7 +60,7 @@ export default function Footer() {
               Chính Sách & Vận Chuyển
             </h3>
             <ul className="space-y-2 text-sm">
-              <li>🚚 Giao hàng: Ngoại thành {settings.outerCityShippingFee.toLocaleString("vi-VN")}đ | Nội thành thỏa thuận Zalo</li>
+              <li>🚚 Giao hàng: Ngoại thành {(shopSettings.outerCityShippingFee || 20000).toLocaleString("vi-VN")}đ | Nội thành thỏa thuận Zalo</li>
               <li>🛡️ Cam kết: 100% hàng chính hãng Bandai Spirits (Nhật Bản)</li>
               <li>📦 Đóng gói: Thùng carton 5 lớp, bọc bóng khí chống móp hộp kit</li>
               <li>🔒 An toàn: Đặt cọc 10% chuyển khoản bảo vệ quyền lợi hai bên</li>
@@ -78,7 +89,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-slate-900 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} {settings.shopName}. Tất cả các quyền được bảo lưu.</p>
+          <p>© {new Date().getFullYear()} {shopSettings.shopName}. Tất cả các quyền được bảo lưu.</p>
           <div className="mt-4 md:mt-0 space-x-4">
             <span>Chuẩn SEO Google</span>
             <span>•</span>

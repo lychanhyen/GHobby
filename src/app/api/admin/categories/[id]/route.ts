@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const sessionData = await getSession();
+    const sessionData = await requireStaff();
     if (!sessionData) {
-      return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
+      return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
     }
 
     // CSRF check
@@ -58,9 +58,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const sessionData = await getSession();
+    const sessionData = await requireStaff();
     if (!sessionData) {
-      return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
+      return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
     }
 
     // CSRF check
@@ -81,7 +81,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const productCount = await prisma.product.count({ where: { categoryId: id } });
     if (productCount > 0) {
       return NextResponse.json(
-        { success: false, message: "Không thể xóa danh mục có sản phẩm" },
+        {
+          success: false,
+          message:
+            "Không thể xóa danh mục vì vẫn còn chứa sản phẩm. Vui lòng chuyển hoặc xóa sản phẩm trước.",
+        },
         { status: 400 }
       );
     }

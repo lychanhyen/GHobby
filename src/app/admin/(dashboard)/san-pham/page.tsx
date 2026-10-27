@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Search, Edit, Eye, EyeOff } from "lucide-react";
+import { Plus, Search, Edit, Eye, EyeOff, Trash2 } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
 
 export default function ProductsPage() {
@@ -20,6 +20,8 @@ export default function ProductsPage() {
     total: 0,
     totalPages: 0,
   });
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -80,6 +82,27 @@ export default function ProductsPage() {
       }
     } catch (error) {
       alert("Có lỗi xảy ra");
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/products/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDeleteTarget(null);
+        fetchProducts();
+      } else {
+        alert(data.message || "Xóa sản phẩm thất bại");
+      }
+    } catch (error) {
+      alert("Có lỗi xảy ra khi xóa sản phẩm");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -201,6 +224,13 @@ export default function ProductsPage() {
                       >
                         {product.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
+                      <button
+                        onClick={() => setDeleteTarget(product)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        aria-label="Xóa sản phẩm"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -209,6 +239,36 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+
+      {/* Modal xác nhận xóa */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Xác nhận xóa sản phẩm</h3>
+            <p className="text-slate-600 mb-6">
+              Bạn có chắc chắn muốn xóa sản phẩm{" "}
+              <span className="font-bold text-slate-900">{deleteTarget.name}</span>? Hành động này
+              sẽ ẩn sản phẩm khỏi cửa hàng.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteProduct}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50"
+              >
+                {deleting ? "Đang xóa..." : "Xóa"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

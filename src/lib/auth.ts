@@ -5,7 +5,16 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 const SESSION_COOKIE_NAME = "ghobby_admin_session";
+const ROLE_COOKIE_NAME = "ghobby_role";
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// Chỉ bật secure khi thực sự chạy trên HTTPS.
+// Nếu bật secure trên http://localhost, trình duyệt sẽ TỪ CHỐI lưu cookie
+// => middleware không thấy session => vòng lặp redirect vô tận.
+function shouldUseSecureCookie(): boolean {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+  return baseUrl.startsWith("https://");
+}
 
 export function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -28,12 +37,25 @@ export async function createSession(userId: string, ipAddress?: string, userAgen
       userAgent: userAgent || null,
       expiresAt,
     },
+    include: { user: true },
   });
 
+  const secure = shouldUseSecureCookie();
   const cookieStore = await cookies();
+
   cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure,
+    sameSite: "lax",
+    path: "/",
+    expires: expiresAt,
+  });
+
+  // Cookie phụ chứa role để middleware (Edge Runtime) quyết định redirect
+  // mà không cần truy vấn DB.
+  cookieStore.set(ROLE_COOKIE_NAME, session.user.role, {
+    httpOnly: true,
+    secure,
     sameSite: "lax",
     path: "/",
     expires: expiresAt,
@@ -43,24 +65,47 @@ export async function createSession(userId: string, ipAddress?: string, userAgen
 }
 
 export async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-  if (!token) {
+    if (!token) {
+      return null;
+    }
+
+    const tokenHash = hashToken(token);
+    const session = await prisma.session.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    if (!session || session.revokedAt || session.expiresAt < new Date()) {
+      return null;
+    }
+
+    if (!session.user.isActive) {
+      return null;
+    }
+
+    return { session, user: session.user };
+  } catch (error) {
+    console.error("Get session error:", error);
     return null;
   }
+}
 
-  const tokenHash = hashToken(token);
-  const session = await prisma.session.findUnique({
-    where: { tokenHash },
-    include: { user: true },
-  });
+export async function requireStaff() {
+  const sessionData = await getSession();
+  if (!sessionData) return null;
+  if (!["ADMIN", "STAFF"].includes(sessionData.user.role)) return null;
+  return sessionData;
+}
 
-  if (!session || session.revokedAt || session.expiresAt < new Date()) {
-    return null;
-  }
-
-  return { session, user: session.user };
+export async function requireAdmin() {
+  const sessionData = await getSession();
+  if (!sessionData) return null;
+  if (sessionData.user.role !== "ADMIN") return null;
+  return sessionData;
 }
 
 export async function revokeSession() {
@@ -77,7 +122,15 @@ export async function revokeSession() {
 
   cookieStore.set(SESSION_COOKIE_NAME, "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(),
+    sameSite: "lax",
+    path: "/",
+    expires: new Date(0),
+  });
+
+  cookieStore.set(ROLE_COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: shouldUseSecureCookie(),
     sameSite: "lax",
     path: "/",
     expires: new Date(0),

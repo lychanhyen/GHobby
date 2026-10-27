@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionData = await getSession();
+    const sessionData = await requireStaff();
     if (!sessionData) {
-      return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
+      return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
     }
 
     const settings = await prisma.storeSetting.findMany();
@@ -57,9 +57,9 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const sessionData = await getSession();
+    const sessionData = await requireStaff();
     if (!sessionData) {
-      return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
+      return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
     }
 
     // CSRF check

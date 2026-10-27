@@ -43,6 +43,10 @@ export default function InventoryLogsPage() {
 
   const getChangeTypeLabel = (type: string) => {
     const labels: any = {
+      POS_SALE: "Bán tại cửa hàng",
+      ONLINE_SALE: "Đơn online",
+      MANUAL_ADJUST: "Chỉnh thủ công",
+      RESTOCK: "Nhập kho",
       IMPORT: "Nhập kho",
       EXPORT_MANUAL: "Xuất thủ công",
       ORDER_DEDUCT: "Trừ kho đơn hàng",
@@ -55,16 +59,19 @@ export default function InventoryLogsPage() {
   };
 
   const getChangeTypeBadge = (type: string) => {
-    if (type === "IMPORT") {
+    if (type === "RESTOCK" || type === "IMPORT") {
       return <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Nhập</span>;
     }
-    if (type === "ORDER_DEDUCT" || type === "EXPORT_MANUAL") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Xuất</span>;
+    if (type === "POS_SALE" || type === "EXPORT_MANUAL") {
+      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">Bán tại quán</span>;
+    }
+    if (type === "ONLINE_SALE" || type === "ORDER_DEDUCT") {
+      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Đơn online</span>;
     }
     if (type === "ORDER_CANCEL_RESTOCK") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Hoàn</span>;
+      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Hoàn kho</span>;
     }
-    if (type === "ADJUST") {
+    if (type === "MANUAL_ADJUST" || type === "ADJUST") {
       return <span className="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Điều chỉnh</span>;
     }
     return <span className="px-2 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">{getChangeTypeLabel(type)}</span>;
@@ -95,11 +102,12 @@ export default function InventoryLogsPage() {
           className="px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
         >
           <option value="">Tất cả loại biến động</option>
-          <option value="IMPORT">Nhập kho</option>
-          <option value="ORDER_DEDUCT">Trừ kho đơn hàng</option>
-          <option value="ORDER_CANCEL_RESTOCK">Hoàn kho</option>
-          <option value="ADJUST">Điều chỉnh</option>
-          <option value="EXPORT_MANUAL">Xuất thủ công</option>
+          <option value="POS_SALE">Bán tại quán</option>
+          <option value="ONLINE_SALE">Đơn online</option>
+          <option value="RESTOCK">Nhập kho / Hoàn kho</option>
+          <option value="MANUAL_ADJUST">Chỉnh thủ công</option>
+          <option value="DAMAGED">Hàng hỏng</option>
+          <option value="WARRANTY">Bảo hành</option>
         </select>
       </div>
 
@@ -142,12 +150,12 @@ export default function InventoryLogsPage() {
                     </td>
                     <td className="px-6 py-4">{getChangeTypeBadge(log.changeType)}</td>
                     <td className="px-6 py-4">
-                      <span className={`text-sm font-bold ${log.quantity > 0 ? "text-green-600" : log.quantity < 0 ? "text-red-600" : "text-slate-600"}`}>
-                        {log.quantity > 0 ? "+" : ""}{log.quantity}
+                      <span className={`text-sm font-bold ${log.quantityChange > 0 ? "text-green-600" : log.quantityChange < 0 ? "text-red-600" : "text-slate-600"}`}>
+                        {log.quantityChange > 0 ? "+" : ""}{log.quantityChange}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">{log.balanceAfter}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{log.creatorName}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900">{log.stockAfter}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{log.performedBy}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{log.note || "-"}</td>
                   </tr>
                 ))}

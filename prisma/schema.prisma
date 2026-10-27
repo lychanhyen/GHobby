@@ -15,6 +15,7 @@ generator client {
 enum Role {
   ADMIN
   STAFF
+  USER
 }
 
 enum ProductType {
@@ -38,7 +39,17 @@ enum OrderStatus {
   PREORDER_ARRIVED    // Hàng thực tế đã cập bến kho shop, bắt đầu phân bổ cho khách cọc
 }
 
+enum ShippingMethod {
+  DELIVERY      // Giao hàng tận nơi
+  STORE_PICKUP  // Khách tự đến cửa hàng nhận
+}
+
 enum InventoryChangeType {
+  POS_SALE               // Bán trực tiếp tại cửa hàng (POS)
+  ONLINE_SALE            // Trừ kho tự động khi khách đặt đơn online
+  MANUAL_ADJUST          // Chỉnh sửa tồn kho thủ công
+  RESTOCK                // Nhập kho / hoàn kho
+  // Các loại cũ giữ lại để tương thích dữ liệu lịch sử
   IMPORT                 // Nhập hàng mới từ nhà phân phối/hãng
   EXPORT_MANUAL          // Xuất bán lẻ trực tiếp tại cửa hàng
   ORDER_DEDUCT           // Trừ kho tự động khi khách đặt đơn hàng có sẵn
@@ -58,12 +69,16 @@ model User {
   username           String               @unique
   passwordHash       String
   fullName           String
+  phone              String?
+  city               String?
   role               Role                 @default(ADMIN)
   mustChangePassword Boolean              @default(true) // Buộc đổi mật khẩu ở lần đăng nhập đầu
+  isActive           Boolean              @default(true) // Khoá / mở khoá tài khoản
   sessions           Session[]
   inventoryLogs      InventoryLog[]
   statusHistories    OrderStatusHistory[]
   confirmedOrders    Order[]              @relation("ConfirmedDepositUser")
+  orders             Order[]              @relation("CustomerOrders")
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 }
@@ -142,20 +157,21 @@ model Product {
 
 // 6. Lịch sử biến động kho (Tuyệt đối không xoá)
 model InventoryLog {
-  id           String              @id @default(uuid())
-  productId    String
-  product      Product             @relation(fields: [productId], references: [id])
-  orderId      String?             // Liên kết tuỳ chọn tới đơn hàng phát sinh biến động
-  order        Order?              @relation(fields: [orderId], references: [id])
-  changeType   InventoryChangeType
-  quantity     Int                 // Dương (+) tăng, Âm (-) giảm
-  balanceAfter Int                 // Tồn kho thực tế sau biến động
-  costPrice    Int?                // Giá vốn tại thời điểm biến động
-  note         String?             // Lý do hoặc mã đơn hàng
-  createdById  String?             // Khác null nếu do User thao tác, null nếu do SYSTEM
-  createdBy    User?               @relation(fields: [createdById], references: [id])
-  creatorName  String              // Tên hiển thị ("Admin Nguyen" hoặc "SYSTEM")
-  createdAt    DateTime            @default(now())
+  id             String              @id @default(uuid())
+  productId      String
+  product        Product             @relation(fields: [productId], references: [id])
+  orderId        String?             // Liên kết tuỳ chọn tới đơn hàng phát sinh biến động
+  order          Order?              @relation(fields: [orderId], references: [id])
+  changeType     InventoryChangeType
+  quantityChange Int                 // Dương (+) tăng, Âm (-) giảm
+  stockBefore    Int                 // Tồn kho trước biến động
+  stockAfter     Int                 // Tồn kho thực tế sau biến động
+  costPrice      Int?                // Giá vốn tại thời điểm biến động
+  note           String?             // Lý do hoặc mã đơn hàng
+  createdById    String?             // Khác null nếu do User thao tác, null nếu do SYSTEM
+  createdBy      User?               @relation(fields: [createdById], references: [id])
+  performedBy    String              // Tên người thực hiện ("Admin Nguyen" hoặc "SYSTEM")
+  createdAt      DateTime            @default(now())
 
   @@index([productId])
   @@index([orderId])
@@ -167,17 +183,21 @@ model Order {
   id                   String               @id @default(uuid())
   orderCode            String               @unique // Mã đơn khó đoán: GHB-XXXXXX
   viewToken            String               @unique // Token bảo mật 32 ký tự để khách xem đơn
+  userId               String?              // Tài khoản khách hàng đã đặt đơn
+  user                 User?                @relation("CustomerOrders", fields: [userId], references: [id], onDelete: SetNull)
   customerName         String
   customerPhone        String
   customerAddress      String
   provinceCity         String               // Tỉnh / Thành phố
+  shippingMethod       ShippingMethod       @default(DELIVERY) // Giao tận nơi hoặc nhận tại cửa hàng
   shippingArea         String               // Khu vực (Nội thành / Ngoại thành) cấu hình được
   isInnerCity          Boolean              @default(false)
-  shippingFee          Int                  // 0 (Zalo thỏa thuận) hoặc phí cố định (20.000đ)
+  shippingFee          Int                  // 0 (nhận tại cửa hàng / Zalo thỏa thuận) hoặc phí cố định (20.000đ)
   totalProductAmount   Int                  // Tổng tiền hàng nguyên số VND
   depositRequired      Int                  // Tiền cọc 10% tính trên tiền hàng (chưa gồm ship)
   depositPaid          Boolean              @default(false)
   status               OrderStatus          @default(PENDING_DEPOSIT)
+  channel              String               @default("ONLINE") // ONLINE | IN_STORE
   isPreOrderOrder      Boolean              @default(false) // Đơn này thuần Pre-order hay có sẵn
   customerIp           String?              // IP khách lấy từ proxy tin cậy
   confirmedDepositById String?
@@ -192,6 +212,7 @@ model Order {
 
   @@index([orderCode])
   @@index([viewToken])
+  @@index([userId, createdAt])              // Tối ưu trang đơn hàng của khách
   @@index([status, createdAt])              // Tối ưu truy vấn quét đơn quá 24h
   @@index([customerPhone, status, createdAt])// Tối ưu kiểm tra đơn chờ cọc của khách
 }

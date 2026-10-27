@@ -15,6 +15,8 @@ export async function GET() {
           id: sessionData.user.id,
           username: sessionData.user.username,
           fullName: sessionData.user.fullName,
+          phone: sessionData.user.phone,
+          city: sessionData.user.city,
           role: sessionData.user.role,
           mustChangePassword: sessionData.user.mustChangePassword,
         },

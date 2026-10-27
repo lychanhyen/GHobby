@@ -1,17 +1,44 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Lock, User } from "lucide-react";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data.success && data.data?.user?.role === "ADMIN") {
+            window.location.replace("/admin");
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Check session error:", error);
+      }
+      if (!cancelled) {
+        setChecking(false);
+      }
+    };
+
+    checkSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,20 +55,31 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (data.success) {
-        if (data.data.mustChangePassword) {
-          router.push("/admin/doi-mat-khau");
+        if (data.data?.user?.role === "ADMIN") {
+          window.location.replace("/admin");
+          return;
         } else {
-          router.push("/admin");
+          setError("Tài khoản này không có quyền truy cập trang quản trị");
+          setLoading(false);
+          return;
         }
       } else {
         setError(data.message || "Đăng nhập thất bại");
+        setLoading(false);
       }
     } catch (err) {
       setError("Có lỗi xảy ra khi đăng nhập");
-    } finally {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-red-950">
+        <div className="text-slate-400">Đang tải...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 px-4">

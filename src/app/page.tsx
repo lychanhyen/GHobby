@@ -4,7 +4,15 @@ import { getCategories, getProducts } from "@/lib/products";
 import { getStoreSettings } from "@/lib/settings";
 
 export default async function HomePage() {
-  const settings = getStoreSettings();
+  let settings;
+  try {
+    settings = await getStoreSettings();
+  } catch {
+    settings = {
+      shopName: process.env.NEXT_PUBLIC_SHOP_NAME || "GHobby Model Kit Shop",
+      outerCityShippingFee: Number(process.env.NEXT_PUBLIC_OUTER_CITY_SHIPPING_FEE) || 20000,
+    };
+  }
   const [categories, allProducts] = await Promise.all([
     getCategories(),
     getProducts(),
@@ -70,7 +78,7 @@ export default async function HomePage() {
           <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center space-x-3">
             <span className="text-2xl">🚚</span>
             <div>
-              <h2 className="text-xs font-bold text-slate-900 uppercase">Đồng Giá Ship {settings.outerCityShippingFee.toLocaleString("vi-VN")}đ</h2>
+              <h2 className="text-xs font-bold text-slate-900 uppercase">Đồng Giá Ship {(settings.outerCityShippingFee || 20000).toLocaleString("vi-VN")}đ</h2>
               <p className="text-[11px] text-slate-500">Ngoại thành | Nội thành Zalo</p>
             </div>
           </div>

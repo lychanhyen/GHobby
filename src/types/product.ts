@@ -15,6 +15,10 @@ export type OrderStatus =
   | "PREORDER_ARRIVED";
 
 export type InventoryChangeType =
+  | "POS_SALE"
+  | "ONLINE_SALE"
+  | "MANUAL_ADJUST"
+  | "RESTOCK"
   | "IMPORT"
   | "EXPORT_MANUAL"
   | "ORDER_DEDUCT"

@@ -9,6 +9,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!sessionData) {
       return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
     }
+    if (!["ADMIN", "STAFF"].includes(sessionData.user.role)) {
+      return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
+    }
 
     const { id } = await params;
     const product = await prisma.product.findUnique({
@@ -32,6 +35,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const sessionData = await getSession();
     if (!sessionData) {
       return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
+    }
+    if (!["ADMIN", "STAFF"].includes(sessionData.user.role)) {
+      return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
     }
 
     // CSRF check
@@ -88,28 +94,67 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ success: false, message: "Sản phẩm đã tồn tại" }, { status: 400 });
     }
 
-    const product = await prisma.product.update({
+    // Lấy tồn kho hiện tại để so sánh và ghi nhật ký kho
+    const existingProduct = await prisma.product.findUnique({
       where: { id },
-      data: {
-        sku,
-        name,
-        slug,
-        categoryId,
-        brand: brand || "",
-        scale: scale || "",
-        series: series || "",
-        costPrice: parseInt(costPrice) || 0,
-        sellingPrice: parseInt(sellingPrice),
-        stockQuantity: parseInt(stockQuantity) || 0,
-        minStockAlert: parseInt(minStockAlert) || 2,
-        productType: productType || "IN_STOCK",
-        expectedReleaseDate: expectedReleaseDate ? new Date(expectedReleaseDate) : null,
-        preOrderLimit: parseInt(preOrderLimit) || 0,
-        imageUrl,
-        description,
-        isActive: isActive !== undefined ? isActive : true,
-      },
-      include: { category: true },
+      select: { stockQuantity: true },
+    });
+    if (!existingProduct) {
+      return NextResponse.json({ success: false, message: "Không tìm thấy sản phẩm" }, { status: 404 });
+    }
+
+    const newStockQuantity =
+      stockQuantity !== undefined ? Number(stockQuantity) : existingProduct.stockQuantity;
+
+    if (!Number.isInteger(newStockQuantity) || newStockQuantity < 0) {
+      return NextResponse.json(
+        { success: false, message: "Tồn kho phải là số nguyên không âm" },
+        { status: 400 }
+      );
+    }
+
+    const product = await prisma.$transaction(async (tx) => {
+      const updated = await tx.product.update({
+        where: { id },
+        data: {
+          sku,
+          name,
+          slug,
+          categoryId,
+          brand: brand || "",
+          scale: scale || "",
+          series: series || "",
+          costPrice: parseInt(costPrice) || 0,
+          sellingPrice: parseInt(sellingPrice),
+          stockQuantity: newStockQuantity,
+          minStockAlert: parseInt(minStockAlert) || 2,
+          productType: productType || "IN_STOCK",
+          expectedReleaseDate: expectedReleaseDate ? new Date(expectedReleaseDate) : null,
+          preOrderLimit: parseInt(preOrderLimit) || 0,
+          imageUrl,
+          description,
+          isActive: isActive !== undefined ? isActive : true,
+        },
+        include: { category: true },
+      });
+
+      // Chỉ ghi log khi tồn kho thực sự thay đổi
+      if (newStockQuantity !== existingProduct.stockQuantity) {
+        await tx.inventoryLog.create({
+          data: {
+            productId: id,
+            changeType: "MANUAL_ADJUST",
+            quantityChange: newStockQuantity - existingProduct.stockQuantity,
+            stockBefore: existingProduct.stockQuantity,
+            stockAfter: newStockQuantity,
+            performedBy: sessionData.user.fullName,
+            createdById: sessionData.user.id,
+            note: `Chỉnh sửa tồn kho thủ công: ${existingProduct.stockQuantity} → ${newStockQuantity}`,
+          },
+        });
+      }
+
+      return updated;
     });
 
     return NextResponse.json({ success: true, message: "Cập nhật sản phẩm thành công", data: product });
@@ -124,6 +169,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const sessionData = await getSession();
     if (!sessionData) {
       return NextResponse.json({ success: false, message: "Chưa đăng nhập" }, { status: 401 });
+    }
+    if (!["ADMIN", "STAFF"].includes(sessionData.user.role)) {
+      return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
     }
 
     // CSRF check

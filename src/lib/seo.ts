@@ -1,10 +1,9 @@
 import { Product } from "@/types/product";
-import { getStoreSettings } from "@/lib/settings";
 
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-export function generateProductJsonLd(product: Product) {
-  const settings = getStoreSettings();
+export function generateProductJsonLd(product: Product, settings?: { shopName?: string }) {
+  const shopName = settings?.shopName || "GHobby Model Kit Shop";
   let availability = "https://schema.org/InStock";
   if (product.productType === "PRE_ORDER") {
     availability = "https://schema.org/PreOrder";
@@ -34,7 +33,7 @@ export function generateProductJsonLd(product: Product) {
       availability: availability,
       seller: {
         "@type": "Organization",
-        name: settings.shopName,
+        name: shopName,
       },
     },
   };
@@ -54,7 +53,7 @@ export function generateBreadcrumbJsonLd(items: { name: string; url: string }[])
 }
 
 export function generateOrganizationJsonLd(settings?: any) {
-  const shopSettings = settings || getStoreSettings();
+  const shopSettings = settings || { shopName: "GHobby Model Kit Shop", shopAddress: "Việt Nam", shopHotline: "" };
 
   return {
     "@context": "https://schema.org",
@@ -78,24 +77,24 @@ export function generateOrganizationJsonLd(settings?: any) {
   };
 }
 
-export function getOrganizationSchema() {
-  const settings = getStoreSettings();
+export function getOrganizationSchema(settings?: any) {
+  const shopSettings = settings || { shopName: "GHobby Model Kit Shop", shopAddress: "Việt Nam", shopHotline: "" };
 
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: settings.shopName,
+    name: shopSettings.shopName,
     url: BASE_URL,
     logo: `${BASE_URL}/logo.png`,
     description: "Chuyên cung cấp mô hình Gunpla Bandai chính hãng, Figure anime cao cấp và phụ kiện mô hình.",
     address: {
       "@type": "PostalAddress",
-      streetAddress: settings.shopAddress,
+      streetAddress: shopSettings.shopAddress,
       addressCountry: "VN",
     },
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: settings.shopHotline,
+      telephone: shopSettings.shopHotline,
       contactType: "customer service",
       areaServed: "VN",
       availableLanguage: ["vi", "en"],
@@ -103,7 +102,7 @@ export function getOrganizationSchema() {
   };
 }
 
-export function getProductSchema(product: Product) {
+export function getProductSchema(product: Product, settings?: { shopName?: string }) {
   let availability = "https://schema.org/InStock";
   if (product.productType === "PRE_ORDER") {
     availability = "https://schema.org/PreOrder";
@@ -133,7 +132,7 @@ export function getProductSchema(product: Product) {
       availability: availability,
       seller: {
         "@type": "Organization",
-        name: "GHobby",
+        name: settings?.shopName || "GHobby Model Kit Shop",
       },
     },
   };

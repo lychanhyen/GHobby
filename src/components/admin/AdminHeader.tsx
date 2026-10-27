@@ -20,8 +20,7 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
       await fetch("/api/auth/logout", {
         method: "POST",
       });
-      router.push("/admin/login");
-      router.refresh();
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);
     }

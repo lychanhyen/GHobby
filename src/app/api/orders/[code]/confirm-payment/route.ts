@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   try {
+    // CSRF check
+    const origin = req.headers.get("origin");
+    const referer = req.headers.get("referer");
+    const host = req.headers.get("host");
+
+    if (origin && host && !origin.includes(host)) {
+      return NextResponse.json({ success: false, message: "Invalid request origin" }, { status: 403 });
+    }
+    if (!origin && referer && host && !referer.includes(host)) {
+      return NextResponse.json({ success: false, message: "Invalid request origin" }, { status: 403 });
+    }
+
     const { code } = await params;
+    const body = await req.json().catch(() => ({}));
+    const tokenFromQuery = new URL(req.url).searchParams.get("token");
+    const token =
+      typeof body?.token === "string" ? body.token : tokenFromQuery;
 
     const order = await prisma.order.findUnique({
       where: { orderCode: code },
@@ -11,6 +28,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cod
 
     if (!order) {
       return NextResponse.json({ success: false, message: "Không tìm thấy đơn hàng" }, { status: 404 });
+    }
+
+    const sessionData = await getSession();
+    const isOwner = Boolean(
+      sessionData && order.userId && order.userId === sessionData.user.id
+    );
+    const hasValidToken = Boolean(token && order.viewToken === token);
+
+    if (!isOwner && !hasValidToken) {
+      return NextResponse.json(
+        { success: false, message: "Không có quyền xác nhận thanh toán cho đơn hàng này" },
+        { status: 403 }
+      );
     }
 
     if (order.status === "PAYMENT_SUBMITTED") {

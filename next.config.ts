@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "bandai-hobby.net",
       },
+      {
+        protocol: "https",
+        hostname: "bandai-a.akamaihd.net",
+        pathname: "/**",
+      },
     ],
   },
 };

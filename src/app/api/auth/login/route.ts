@@ -46,6 +46,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Tên đăng nhập hoặc mật khẩu không đúng" }, { status: 401 });
     }
 
+    if (!user.isActive) {
+      await recordLoginAttempt(ipAddress, username, false);
+      return NextResponse.json(
+        { success: false, message: "Tài khoản đã bị khoá. Vui lòng liên hệ quản trị viên." },
+        { status: 403 }
+      );
+    }
+
     // Verify password
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {

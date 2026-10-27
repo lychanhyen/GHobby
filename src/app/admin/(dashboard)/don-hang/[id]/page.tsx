@@ -186,8 +186,21 @@ export default function OrderDetailAdminPage() {
           <div className="space-y-2 text-sm">
             <p><span className="font-bold">Họ tên:</span> {order.customerName}</p>
             <p><span className="font-bold">Số điện thoại:</span> {order.customerPhone}</p>
-            <p><span className="font-bold">Địa chỉ:</span> {order.customerAddress}</p>
-            <p><span className="font-bold">Tỉnh/Thành phố:</span> {order.provinceCity}</p>
+            <p>
+              <span className="font-bold">Phương thức nhận hàng:</span>{" "}
+              {order.shippingMethod === "STORE_PICKUP" ? "Nhận tại cửa hàng" : "Giao hàng tận nơi"}
+            </p>
+            <p>
+              <span className="font-bold">
+                {order.shippingMethod === "STORE_PICKUP" ? "Nhận tại:" : "Địa chỉ:"}
+              </span>{" "}
+              {order.shippingMethod === "STORE_PICKUP"
+                ? "Khách tự đến cửa hàng nhận hàng"
+                : order.customerAddress}
+            </p>
+            {order.shippingMethod !== "STORE_PICKUP" && (
+              <p><span className="font-bold">Tỉnh/Thành phố:</span> {order.provinceCity}</p>
+            )}
             {order.note && <p><span className="font-bold">Ghi chú:</span> {order.note}</p>}
             {order.confirmedDepositBy && (
               <p><span className="font-bold">Xác nhận cọc bởi:</span> {order.confirmedDepositBy.fullName}</p>

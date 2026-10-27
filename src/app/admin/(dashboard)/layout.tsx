@@ -23,9 +23,14 @@ export default async function AdminLayout({
     redirect("/admin/login");
   }
 
-  if (sessionData.user.mustChangePassword) {
-    redirect("/admin/doi-mat-khau");
+  if (sessionData.user.role !== "ADMIN") {
+    redirect("/admin/login");
   }
+
+  // Bỏ bắt buộc đổi mật khẩu để tránh vòng lặp redirect
+  // if (sessionData.user.mustChangePassword) {
+  //   redirect("/admin/doi-mat-khau");
+  // }
 
   return (
     <div className="min-h-screen bg-slate-50">

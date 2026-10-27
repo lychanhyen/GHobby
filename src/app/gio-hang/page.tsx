@@ -1,12 +1,23 @@
 "use client";
 
-import { useCart } from "@/context/CartContext";
+import { useState } from "react";
+import { CartItem, useCart } from "@/context/CartContext";
 import Link from "next/link";
 import { Trash2, Plus, Minus, ShoppingBag, AlertTriangle } from "lucide-react";
 import { formatCurrencyVND } from "@/lib/utils";
+import { getProductCartLimit } from "@/lib/cart";
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, getTotalPrice, getDepositAmount, hasMixedCart, clearCart } = useCart();
+  const { items, isHydrated, removeItem, updateQuantity, getTotalPrice, getDepositAmount, hasMixedCart, clearCart } = useCart();
+  const [message, setMessage] = useState<string | null>(null);
+
+  if (!isHydrated) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center text-slate-600">
+        Đang tải giỏ hàng...
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -26,9 +37,34 @@ export default function CartPage() {
     );
   }
 
+  const handleIncrease = (item: CartItem) => {
+    const maxQuantity = getProductCartLimit(item.product);
+
+    if (item.quantity >= maxQuantity) {
+      setMessage(
+        item.product.productType === "IN_STOCK"
+          ? `Không thể tăng số lượng "${item.product.name}": tồn kho hiện tại ${item.product.stockQuantity} hộp và mỗi sản phẩm chỉ được đặt tối đa 3 hộp.`
+          : `Không thể tăng số lượng "${item.product.name}": chỉ còn ${maxQuantity} suất pre-order.`
+      );
+      return;
+    }
+
+    setMessage(null);
+    updateQuantity(item.product.id, item.quantity + 1);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-black text-slate-900 mb-6">Giỏ hàng của bạn</h1>
+
+      {message && (
+        <div
+          role="alert"
+          className="mb-6 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm font-medium text-amber-800"
+        >
+          {message}
+        </div>
+      )}
 
       {hasMixedCart() && (
         <div className="mb-6 p-4 rounded-lg bg-amber-50 border border-amber-200 flex items-start space-x-3">
@@ -82,14 +118,17 @@ export default function CartPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                      onClick={() => {
+                        setMessage(null);
+                        updateQuantity(item.product.id, item.quantity - 1);
+                      }}
                       className="p-1 rounded-lg border border-slate-300 hover:bg-slate-100"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
                     <span className="w-12 text-center font-bold">{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                      onClick={() => handleIncrease(item)}
                       className="p-1 rounded-lg border border-slate-300 hover:bg-slate-100"
                     >
                       <Plus className="w-4 h-4" />
@@ -136,7 +175,7 @@ export default function CartPage() {
               onClick={(e) => {
                 if (hasMixedCart()) {
                   e.preventDefault();
-                  alert("Không thể thanh toán đơn hỗn hợp. Vui lòng tách thành 2 đơn riêng biệt.");
+                  setMessage("Không thể thanh toán đơn hỗn hợp. Vui lòng tách thành 2 đơn riêng biệt.");
                 }
               }}
             >
