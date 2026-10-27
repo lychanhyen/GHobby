@@ -6,7 +6,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import ProductCard from "@/components/ProductCard";
 import { getProductBySlug, getRelatedProducts } from "@/lib/products";
 import { formatCurrencyVND } from "@/lib/utils";
-import { BASE_URL, getBreadcrumbSchema, getProductSchema } from "@/lib/seo";
+import { BASE_URL, getBreadcrumbSchema, getProductSchema, generateProductJsonLd, generateBreadcrumbJsonLd } from "@/lib/seo";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -71,8 +71,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     { name: product.name, url: `/san-pham/${product.slug}` },
   ];
 
-  const productSchema = getProductSchema(product);
-  const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
+  const productSchema = generateProductJsonLd(product);
+  const breadcrumbSchema = generateBreadcrumbJsonLd(breadcrumbItems);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -172,7 +172,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
                 {isPreOrder && product.expectedReleaseDate && (
                   <div className="mt-2 text-xs text-amber-800 font-semibold">
-                    📅 Dự kiến phát hành: {product.expectedReleaseDate}
+                    📅 Dự kiến phát hành: {typeof product.expectedReleaseDate === "string" ? product.expectedReleaseDate : new Date(product.expectedReleaseDate).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
                   </div>
                 )}
               </div>

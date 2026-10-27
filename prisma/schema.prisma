@@ -8,17 +8,95 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id                 String   @id @default(uuid())
-  username           String   @unique
-  passwordHash       String
-  fullName           String
-  role               String   @default("ADMIN")
-  mustChangePassword Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+// ----------------------------------------------------
+// ENUMS HỆ THỐNG
+// ----------------------------------------------------
+
+enum Role {
+  ADMIN
+  STAFF
 }
 
+enum ProductType {
+  IN_STOCK   // Hàng có sẵn trong kho
+  PRE_ORDER  // Hàng đặt trước sắp phát hành
+}
+
+enum OrderStatus {
+  // Chu trình hàng có sẵn:
+  PENDING_DEPOSIT     // Vừa đặt, chờ quét VietQR cọc 10% trong 24h (đã trừ kho giữ suất)
+  PAYMENT_SUBMITTED   // Khách bấm "Tôi đã chuyển khoản", chờ admin duyệt (gia hạn thêm 6h)
+  DEPOSITED           // Admin đã xác nhận nhận đủ cọc 10%
+  SHIPPING            // Đang giao hàng
+  COMPLETED           // Giao thành công, khách đã thanh toán nốt 90%
+  CANCELLED           // Huỷ đơn (quá 24h hoặc khách/admin huỷ) -> Hoàn kho 1 lần
+  RETURNED            // Hàng bị trả về hoặc khách từ chối nhận COD -> Mất cọc 10%
+
+  // Chu trình hàng Pre-order:
+  PREORDER_PENDING    // Khách đặt trước, chờ cọc 10% trong 24h (chưa trừ kho)
+  PREORDER_DEPOSITED  // Đã nhận cọc 10%, ghi nhận suất đặt từ hãng
+  PREORDER_ARRIVED    // Hàng thực tế đã cập bến kho shop, bắt đầu phân bổ cho khách cọc
+}
+
+enum InventoryChangeType {
+  IMPORT                 // Nhập hàng mới từ nhà phân phối/hãng
+  EXPORT_MANUAL          // Xuất bán lẻ trực tiếp tại cửa hàng
+  ORDER_DEDUCT           // Trừ kho tự động khi khách đặt đơn hàng có sẵn
+  ORDER_CANCEL_RESTOCK   // Hoàn kho khi đơn bị huỷ (sau 24h hoặc admin huỷ)
+  ADJUST                 // Cân chỉnh tồn kho sau kiểm kê thực tế
+  DAMAGED                // Xuất loại bỏ do hàng lỗi runner, móp hộp nặng
+  WARRANTY               // Xuất linh kiện / part thay thế cho khách
+}
+
+// ----------------------------------------------------
+// MODELS HỆ THỐNG
+// ----------------------------------------------------
+
+// 1. Quản trị viên
+model User {
+  id                 String               @id @default(uuid())
+  username           String               @unique
+  passwordHash       String
+  fullName           String
+  role               Role                 @default(ADMIN)
+  mustChangePassword Boolean              @default(true) // Buộc đổi mật khẩu ở lần đăng nhập đầu
+  sessions           Session[]
+  inventoryLogs      InventoryLog[]
+  statusHistories    OrderStatusHistory[]
+  confirmedOrders    Order[]              @relation("ConfirmedDepositUser")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+// 2. Phiên làm việc Admin (Lưu DB, thu hồi tức thì khi đăng xuất)
+model Session {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String    @unique // Mã băm SHA-256 của Session Token
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  revokedAt    DateTime? // Khác null nghĩa là đã bị đăng xuất/thu hồi
+  createdAt    DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+// 3. Lịch sử đăng nhập chống Brute-force trong DB
+model LoginAttempt {
+  id          String   @id @default(uuid())
+  ipAddress   String
+  username    String
+  isSuccess   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([ipAddress, createdAt])
+  @@index([username, createdAt])
+}
+
+// 4. Danh mục sản phẩm Gunpla
 model Category {
   id          String    @id @default(uuid())
   name        String
@@ -26,8 +104,11 @@ model Category {
   description String?
   products    Product[]
   createdAt   DateTime  @default(now())
+
+  @@index([slug])
 }
 
+// 5. Sản phẩm Gunpla / Figure
 model Product {
   id                  String         @id @default(uuid())
   sku                 String         @unique
@@ -35,64 +116,123 @@ model Product {
   slug                String         @unique
   categoryId          String
   category            Category       @relation(fields: [categoryId], references: [id])
-  brand               String         // Bandai, Kotobukiya, Daban...
+  brand               String         // Bandai Spirits, Kotobukiya...
   scale               String         // 1/144, 1/100, 1/60, Non-scale...
   series              String         // Universal Century, Seed, 00, WfM...
-  costPrice           Int            // Giá vốn (VND)
-  sellingPrice        Int            // Giá bán (VND)
-  stockQuantity       Int            @default(0) // Số lượng tồn kho
+  costPrice           Int            // Giá vốn số nguyên VND
+  sellingPrice        Int            // Giá bán số nguyên VND
+  stockQuantity       Int            @default(0) // Tồn kho thực tế (có ràng buộc CHECK >= 0)
   minStockAlert       Int            @default(2) // Ngưỡng cảnh báo sắp hết
-  productType         String         @default("IN_STOCK") // IN_STOCK, PRE_ORDER
-  expectedReleaseDate String?        // Dành cho hàng Pre-order (vd: "Tháng 12/2026")
-  preOrderCount       Int            @default(0) // Số lượng khách đã đặt cọc
-  imageUrl            String
+  productType         ProductType    @default(IN_STOCK)
+  expectedReleaseDate DateTime?      // Kiểu ngày thực tế cho hàng Pre-order
+  preOrderLimit       Int            @default(0) // Giới hạn tối đa số suất cho phép đặt trước
+  preOrderCount       Int            @default(0) // Số suất khách đã cọc thành công
+  imageUrl            String         // URL ảnh công khai trên Supabase Storage
   description         String
   isActive            Boolean        @default(true) // Ẩn / Hiện (Soft delete)
   orderItems          OrderItem[]
   inventoryLogs       InventoryLog[]
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([isActive])
 }
 
+// 6. Lịch sử biến động kho (Tuyệt đối không xoá)
 model InventoryLog {
-  id           String   @id @default(uuid())
+  id           String              @id @default(uuid())
   productId    String
-  product      Product  @relation(fields: [productId], references: [id])
-  changeType   String   // IMPORT, EXPORT_MANUAL, ORDER_DEDUCT, ORDER_CANCEL_RESTOCK, ADJUST, DAMAGED, WARRANTY
-  quantity     Int      // Số lượng tăng (+) hoặc giảm (-)
-  balanceAfter Int      // Tồn kho sau biến động
-  costPrice    Int?     // Giá vốn tại thời điểm nhập
-  note         String?  // Lý do biến động hoặc mã đơn hàng
-  createdBy    String   // Người thực hiện (Admin)
-  createdAt    DateTime @default(now())
+  product      Product             @relation(fields: [productId], references: [id])
+  orderId      String?             // Liên kết tuỳ chọn tới đơn hàng phát sinh biến động
+  order        Order?              @relation(fields: [orderId], references: [id])
+  changeType   InventoryChangeType
+  quantity     Int                 // Dương (+) tăng, Âm (-) giảm
+  balanceAfter Int                 // Tồn kho thực tế sau biến động
+  costPrice    Int?                // Giá vốn tại thời điểm biến động
+  note         String?             // Lý do hoặc mã đơn hàng
+  createdById  String?             // Khác null nếu do User thao tác, null nếu do SYSTEM
+  createdBy    User?               @relation(fields: [createdById], references: [id])
+  creatorName  String              // Tên hiển thị ("Admin Nguyen" hoặc "SYSTEM")
+  createdAt    DateTime            @default(now())
+
+  @@index([productId])
+  @@index([orderId])
+  @@index([createdAt])
 }
 
+// 7. Đơn hàng (Tuyệt đối không xoá cứng)
 model Order {
-  id                 String      @id @default(uuid())
-  orderCode          String      @unique // Mã đơn: GHB-XXXXXX
-  customerName       String
-  customerPhone      String
-  customerAddress    String
-  shippingZone       String      // INNER_CITY (Đà Nẵng - Zalo), OUTER_CITY (Liên tỉnh - 20.000đ)
-  shippingFee        Int         // 0 hoặc 20000
-  totalProductAmount Int         // Tổng tiền hàng
-  depositRequired    Int         // Số tiền cọc 10% tính trên tổng tiền hàng
-  depositPaid        Boolean     @default(false) // Trạng thái đã cọc
-  isRestocked        Boolean     @default(false) // Cờ đảm bảo chỉ hoàn kho đúng 1 lần
-  status             String      @default("PENDING_DEPOSIT") // PENDING_DEPOSIT, CONFIRMED, SHIPPING, COMPLETED, CANCELLED
-  note               String?
-  items              OrderItem[]
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  id                   String               @id @default(uuid())
+  orderCode            String               @unique // Mã đơn khó đoán: GHB-XXXXXX
+  viewToken            String               @unique // Token bảo mật 32 ký tự để khách xem đơn
+  customerName         String
+  customerPhone        String
+  customerAddress      String
+  provinceCity         String               // Tỉnh / Thành phố
+  shippingArea         String               // Khu vực (Nội thành / Ngoại thành) cấu hình được
+  isInnerCity          Boolean              @default(false)
+  shippingFee          Int                  // 0 (Zalo thỏa thuận) hoặc phí cố định (20.000đ)
+  totalProductAmount   Int                  // Tổng tiền hàng nguyên số VND
+  depositRequired      Int                  // Tiền cọc 10% tính trên tiền hàng (chưa gồm ship)
+  depositPaid          Boolean              @default(false)
+  status               OrderStatus          @default(PENDING_DEPOSIT)
+  isPreOrderOrder      Boolean              @default(false) // Đơn này thuần Pre-order hay có sẵn
+  customerIp           String?              // IP khách lấy từ proxy tin cậy
+  confirmedDepositById String?
+  confirmedDepositBy   User?                @relation("ConfirmedDepositUser", fields: [confirmedDepositById], references: [id])
+  confirmedDepositAt   DateTime?
+  note                 String?
+  items                OrderItem[]
+  statusHistories      OrderStatusHistory[]
+  inventoryLogs        InventoryLog[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@index([orderCode])
+  @@index([viewToken])
+  @@index([status, createdAt])              // Tối ưu truy vấn quét đơn quá 24h
+  @@index([customerPhone, status, createdAt])// Tối ưu kiểm tra đơn chờ cọc của khách
 }
 
+// 8. Dòng đơn hàng (Quan hệ Restrict với Order - Không cho xoá đơn nếu có item)
 model OrderItem {
-  id          String   @id @default(uuid())
+  id               String   @id @default(uuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id])
+  productName      String   // Tên sản phẩm tại thời điểm mua
+  priceAtOrder     Int      // Giá bán tại thời điểm đặt hàng
+  costPriceAtOrder Int      // Giá vốn tại thời điểm đặt hàng (tính lãi chuẩn)
+  quantity         Int      // Số lượng đặt (> 0)
+  isDeducted       Boolean  @default(false) // Cờ kiểm tra: Đã trừ kho thực tế chưa
+  isPreOrderItem   Boolean  @default(false)
+}
+
+// 9. Lịch sử thay đổi trạng thái đơn hàng (Audit Trail)
+model OrderStatusHistory {
+  id          String      @id @default(uuid())
   orderId     String
-  order       Order    @relation(fields: [orderId], references: [id])
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  productName String
-  price       Int
-  quantity    Int
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus  OrderStatus
+  toStatus    OrderStatus
+  changedById String?
+  changedBy   User?       @relation(fields: [changedById], references: [id])
+  actorName   String      // Tên hiển thị người đổi ("Admin A" hoặc "SYSTEM_24H_CRON")
+  note        String?
+  createdAt   DateTime    @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+// 10. Cấu hình cửa hàng linh hoạt trong DB
+model StoreSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique // "inner_city_config", "shipping_config", "bank_config"
+  value       String   // Chuỗi JSON cấu hình
+  description String?
+  updatedAt   DateTime @updatedAt
 }

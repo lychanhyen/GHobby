@@ -1,12 +1,21 @@
+"use client";
+
 import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
 import { SAMPLE_CATEGORIES } from "@/data/sample-products";
+import { getStoreSettings } from "@/lib/settings";
+import { useCart } from "@/context/CartContext";
 
 export default function Header() {
+  const settings = getStoreSettings();
+  const { getTotalItems } = useCart();
+  const cartItemsCount = getTotalItems();
+
   return (
     <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md border-b border-slate-800">
       {/* Top Banner Notice */}
       <div className="bg-gradient-to-r from-red-600 to-rose-700 text-xs py-1.5 px-4 text-center font-medium">
-        <span>🔥 Ưu đãi Gundam & Figure: Ship cố định 20K liên tỉnh | Nội thành Đà Nẵng hỗ trợ giao hỏa tốc Zalo</span>
+        <span>🔥 Ưu đãi Gunpla & Figure: Đồng giá ship ngoại thành {settings.outerCityShippingFee.toLocaleString("vi-VN")}đ | Nội thành hỗ trợ giao hỏa tốc Zalo</span>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,7 +31,7 @@ export default function Header() {
                   GHOBBY<span className="text-red-500">.VN</span>
                 </span>
                 <span className="text-[10px] text-slate-400 font-medium tracking-wider uppercase block">
-                  Gunpla & Figure Đà Nẵng
+                  Gunpla & Figure Shop
                 </span>
               </div>
             </Link>
@@ -54,20 +63,12 @@ export default function Header() {
               className="relative inline-flex items-center justify-center p-2 rounded-lg bg-slate-800 text-slate-200 hover:text-white hover:bg-slate-700 transition-colors"
               aria-label="Giỏ hàng"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                />
-              </svg>
+              <ShoppingCart className="h-6 w-6" />
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  {cartItemsCount}
+                </span>
+              )}
               <span className="sr-only">Giỏ hàng</span>
             </Link>
 

@@ -11,8 +11,9 @@ interface CategoryPageProps {
   searchParams: Promise<{ page?: string; brand?: string }>;
 }
 
-export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const { page, brand } = await searchParams;
   const category = await getCategoryBySlug(slug);
 
   if (!category) {
@@ -24,8 +25,13 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const title = `Mô Hình ${category.name} Chính Hãng Bandai Giá Tốt`;
   const description =
     category.description ||
-    `Danh sách mô hình ${category.name} chính hãng Bandai Spirits tại GHobby Đà Nẵng. Cập nhật mẫu mới nhất, giá rẻ, hỗ trợ ship toàn quốc 20K.`;
-  const canonicalUrl = `${BASE_URL}/danh-muc/${category.slug}`;
+    `Danh sách mô hình ${category.name} chính hãng Bandai Spirits tại GHobby. Cập nhật mẫu mới nhất, giá rẻ, hỗ trợ ship toàn quốc.`;
+
+  // Rule 11: Canonical của phân trang trỏ chính trang đó; trang lọc trỏ về danh mục gốc
+  let canonicalUrl = `${BASE_URL}/danh-muc/${category.slug}`;
+  if (page && Number(page) > 1 && !brand) {
+    canonicalUrl = `${BASE_URL}/danh-muc/${category.slug}?page=${page}`;
+  }
 
   return {
     title,

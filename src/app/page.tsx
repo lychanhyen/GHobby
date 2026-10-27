@@ -1,8 +1,10 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { getCategories, getProducts } from "@/lib/products";
+import { getStoreSettings } from "@/lib/settings";
 
 export default async function HomePage() {
+  const settings = getStoreSettings();
   const [categories, allProducts] = await Promise.all([
     getCategories(),
     getProducts(),
@@ -18,11 +20,11 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-red-600/30 text-red-400 border border-red-500/30 mb-4">
-              CHÍNH HÃNG BANDAI SPIRITS • ĐÀ NẴNG
+              CHÍNH HÃNG BANDAI SPIRITS & KOTOBUKIYA
             </span>
             {/* EXACTLY ONE H1 ON HOME PAGE */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight mb-4">
-              Shop Mô Hình Gunpla & Figure Chính Hãng <span className="text-red-500">GHobby Đà Nẵng</span>
+              Shop Mô Hình Gunpla & Figure Chính Hãng <span className="text-red-500">{settings.shopName}</span>
             </h1>
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
               Thiên đường dành cho builder Gunpla với đầy đủ các cấp độ High Grade, Real Grade, Master Grade, Perfect Grade và Figure chính hãng. Quản lý kho chuẩn xác theo thời gian thực, đặt cọc 10% an tâm nhận hàng.
@@ -68,8 +70,8 @@ export default async function HomePage() {
           <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center space-x-3">
             <span className="text-2xl">🚚</span>
             <div>
-              <h2 className="text-xs font-bold text-slate-900 uppercase">Đồng Giá Ship 20K</h2>
-              <p className="text-[11px] text-slate-500">Liên tỉnh | Nội thành Zalo</p>
+              <h2 className="text-xs font-bold text-slate-900 uppercase">Đồng Giá Ship {settings.outerCityShippingFee.toLocaleString("vi-VN")}đ</h2>
+              <p className="text-[11px] text-slate-500">Ngoại thành | Nội thành Zalo</p>
             </div>
           </div>
 
@@ -114,7 +116,7 @@ export default async function HomePage() {
         <div className="flex items-end justify-between mb-6 border-b border-slate-200 pb-3">
           <div>
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-              Mô Hình Có Sẵn Tại Kho Đà Nẵng
+              Mô Hình Có Sẵn Tại Kho
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Hàng có sẵn đóng gói giao ngay trong ngày. Tồn kho tự động cập nhật chính xác.

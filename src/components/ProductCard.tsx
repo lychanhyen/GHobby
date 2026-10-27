@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Product } from "@/types/product";
 import { formatCurrencyVND } from "@/lib/utils";
+import { useCart } from "@/context/CartContext";
+import { ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -9,9 +13,17 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, priority = false }: ProductCardProps) {
+  const { addItem } = useCart();
   const isOutOfStock = product.productType === "IN_STOCK" && product.stockQuantity <= 0;
   const isPreOrder = product.productType === "PRE_ORDER";
   const isLowStock = product.productType === "IN_STOCK" && product.stockQuantity > 0 && product.stockQuantity <= product.minStockAlert;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isOutOfStock) return;
+    addItem(product, 1);
+    alert("Đã thêm sản phẩm vào giỏ hàng");
+  };
 
   return (
     <article className="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
@@ -81,17 +93,27 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             </span>
             {isPreOrder && product.expectedReleaseDate && (
               <span className="text-[10px] text-amber-700 font-medium block">
-                Phát hành: {product.expectedReleaseDate}
+                Phát hành: {typeof product.expectedReleaseDate === "string" ? product.expectedReleaseDate : new Date(product.expectedReleaseDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
               </span>
             )}
           </div>
 
-          <Link
-            href={`/san-pham/${product.slug}`}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-red-600 transition-colors"
-          >
-            {isOutOfStock ? "Xem Chi Tiết" : isPreOrder ? "Đặt Cọc" : "Mua Ngay"}
-          </Link>
+          {!isOutOfStock ? (
+            <button
+              onClick={handleAddToCart}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white hover:bg-red-500 transition-colors flex items-center space-x-1"
+            >
+              <ShoppingCart className="w-3 h-3" />
+              <span>{isPreOrder ? "Đặt trước" : "Thêm"}</span>
+            </button>
+          ) : (
+            <Link
+              href={`/san-pham/${product.slug}`}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-400 text-white cursor-not-allowed"
+            >
+              Hết hàng
+            </Link>
+          )}
         </div>
       </div>
     </article>

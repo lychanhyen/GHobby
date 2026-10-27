@@ -2,6 +2,8 @@ import { prisma } from "./prisma";
 import { SAMPLE_CATEGORIES, SAMPLE_PRODUCTS } from "@/data/sample-products";
 import { Category, Product } from "@/types/product";
 
+const useSampleData = process.env.USE_SAMPLE_DATA === "true" && process.env.NODE_ENV !== "production";
+
 export async function getCategories(): Promise<Category[]> {
   try {
     const categories = await prisma.category.findMany({
@@ -16,9 +18,16 @@ export async function getCategories(): Promise<Category[]> {
       }));
     }
   } catch (error) {
-    // Database fallback
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Database Error] Failed to fetch categories from PostgreSQL:", error);
+      return [];
+    }
   }
-  return SAMPLE_CATEGORIES;
+
+  if (useSampleData) {
+    return SAMPLE_CATEGORIES;
+  }
+  return [];
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -35,10 +44,17 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
       };
     }
   } catch (error) {
-    // Database fallback
+    if (process.env.NODE_ENV === "production") {
+      console.error(`[Database Error] Failed to fetch category ${slug}:`, error);
+      return null;
+    }
   }
-  const found = SAMPLE_CATEGORIES.find((c) => c.slug === slug);
-  return found || null;
+
+  if (useSampleData) {
+    const found = SAMPLE_CATEGORIES.find((c) => c.slug === slug);
+    return found || null;
+  }
+  return null;
 }
 
 export async function getProducts(options?: {
@@ -91,6 +107,7 @@ export async function getProducts(options?: {
         minStockAlert: p.minStockAlert,
         productType: p.productType as any,
         expectedReleaseDate: p.expectedReleaseDate || undefined,
+        preOrderLimit: p.preOrderLimit,
         preOrderCount: p.preOrderCount,
         imageUrl: p.imageUrl,
         description: p.description,
@@ -98,26 +115,33 @@ export async function getProducts(options?: {
       }));
     }
   } catch (error) {
-    // Database fallback
-  }
-
-  let list = SAMPLE_PRODUCTS.filter((p) => p.isActive);
-  if (options?.categorySlug) {
-    const cat = SAMPLE_CATEGORIES.find((c) => c.slug === options.categorySlug);
-    if (cat) {
-      list = list.filter((p) => p.categoryId === cat.id);
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Database Error] Failed to fetch products from PostgreSQL:", error);
+      return [];
     }
-  } else if (options?.categoryId) {
-    list = list.filter((p) => p.categoryId === options.categoryId);
-  }
-  if (options?.brand) {
-    list = list.filter((p) => p.brand.toLowerCase().includes(options.brand!.toLowerCase()));
   }
 
-  if (options?.limit) {
-    list = list.slice(0, options.limit);
+  if (useSampleData) {
+    let list = SAMPLE_PRODUCTS.filter((p) => p.isActive);
+    if (options?.categorySlug) {
+      const cat = SAMPLE_CATEGORIES.find((c) => c.slug === options.categorySlug);
+      if (cat) {
+        list = list.filter((p) => p.categoryId === cat.id);
+      }
+    } else if (options?.categoryId) {
+      list = list.filter((p) => p.categoryId === options.categoryId);
+    }
+    if (options?.brand) {
+      list = list.filter((p) => p.brand.toLowerCase().includes(options.brand!.toLowerCase()));
+    }
+
+    if (options?.limit) {
+      list = list.slice(0, options.limit);
+    }
+    return list;
   }
-  return list;
+
+  return [];
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -150,6 +174,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
         minStockAlert: product.minStockAlert,
         productType: product.productType as any,
         expectedReleaseDate: product.expectedReleaseDate || undefined,
+        preOrderLimit: product.preOrderLimit,
         preOrderCount: product.preOrderCount,
         imageUrl: product.imageUrl,
         description: product.description,
@@ -157,10 +182,17 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       };
     }
   } catch (error) {
-    // Database fallback
+    if (process.env.NODE_ENV === "production") {
+      console.error(`[Database Error] Failed to fetch product ${slug}:`, error);
+      return null;
+    }
   }
-  const found = SAMPLE_PRODUCTS.find((p) => p.slug === slug);
-  return found || null;
+
+  if (useSampleData) {
+    const found = SAMPLE_PRODUCTS.find((p) => p.slug === slug);
+    return found || null;
+  }
+  return null;
 }
 
 export async function getRelatedProducts(productId: string, categoryId: string, limit = 4): Promise<Product[]> {

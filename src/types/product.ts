@@ -1,11 +1,34 @@
+export type ProductType = "IN_STOCK" | "PRE_ORDER";
+
+export type Role = "ADMIN" | "STAFF";
+
+export type OrderStatus =
+  | "PENDING_DEPOSIT"
+  | "PAYMENT_SUBMITTED"
+  | "DEPOSITED"
+  | "SHIPPING"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "RETURNED"
+  | "PREORDER_PENDING"
+  | "PREORDER_DEPOSITED"
+  | "PREORDER_ARRIVED";
+
+export type InventoryChangeType =
+  | "IMPORT"
+  | "EXPORT_MANUAL"
+  | "ORDER_DEDUCT"
+  | "ORDER_CANCEL_RESTOCK"
+  | "ADJUST"
+  | "DAMAGED"
+  | "WARRANTY";
+
 export interface Category {
   id: string;
   name: string;
   slug: string;
   description?: string;
 }
-
-export type ProductType = "IN_STOCK" | "PRE_ORDER";
 
 export interface Product {
   id: string;
@@ -22,11 +45,24 @@ export interface Product {
   stockQuantity: number;
   minStockAlert: number;
   productType: ProductType;
-  expectedReleaseDate?: string;
+  expectedReleaseDate?: Date | string;
+  preOrderLimit?: number;
   preOrderCount?: number;
   imageUrl: string;
   description: string;
   isActive: boolean;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+}
+
+export interface StoreSettings {
+  shopName: string;
+  shopAddress: string;
+  shopHotline: string;
+  shopEmail?: string;
+  bankId: string;
+  bankAccount: string;
+  bankAccountName: string;
+  outerCityShippingFee: number;
+  innerCityDistricts: string[];
 }

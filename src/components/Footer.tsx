@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { SAMPLE_CATEGORIES } from "@/data/sample-products";
+import { getStoreSettings } from "@/lib/settings";
 
 export default function Footer() {
+  const settings = getStoreSettings();
+
   return (
     <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -12,11 +15,11 @@ export default function Footer() {
               GHOBBY<span className="text-red-500">.VN</span>
             </span>
             <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              Cửa hàng chuyên phân phối mô hình Gunpla Bandai chính hãng (HG, RG, MG, PG), Figure anime cao cấp và phụ kiện mô hình tại Đà Nẵng & giao hàng toàn quốc.
+              Cửa hàng chuyên phân phối mô hình Gunpla Bandai chính hãng (HG, RG, MG, PG, SD), Figure anime cao cấp và phụ kiện mô hình uy tín, giao hàng toàn quốc.
             </p>
-            <div className="text-xs text-slate-500">
-              <p>📍 Địa chỉ: Quận Hải Châu, TP. Đà Nẵng</p>
-              <p>📞 Hotline/Zalo: 0905.123.456</p>
+            <div className="text-xs text-slate-500 space-y-1">
+              <p>📍 Địa chỉ: {settings.shopAddress}</p>
+              <p>📞 Hotline/Zalo: {settings.shopHotline}</p>
               <p>⏰ Mở cửa: 09:00 - 21:00 hàng ngày</p>
             </div>
           </div>
@@ -43,34 +46,39 @@ export default function Footer() {
           {/* Col 3: Policy */}
           <div>
             <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
-              Chính Sách & Thanh Toán
+              Chính Sách & Vận Chuyển
             </h3>
             <ul className="space-y-2 text-sm">
-              <li>🚚 Giao hàng: Ngoại thành 20K | Nội thành Đà Nẵng hỏa tốc Zalo</li>
-              <li>💳 Cọc 10%: Quét VietQR tài khoản ngân hàng MB tiện lợi</li>
+              <li>🚚 Giao hàng: Ngoại thành {settings.outerCityShippingFee.toLocaleString("vi-VN")}đ | Nội thành thỏa thuận Zalo</li>
               <li>🛡️ Cam kết: 100% hàng chính hãng Bandai Spirits (Nhật Bản)</li>
-              <li>📦 Đóng gói: Thùng carton 3-5 lớp, bóng khí chống móp hộp kit</li>
+              <li>📦 Đóng gói: Thùng carton 5 lớp, bọc bóng khí chống móp hộp kit</li>
+              <li>🔒 An toàn: Đặt cọc 10% chuyển khoản bảo vệ quyền lợi hai bên</li>
             </ul>
           </div>
 
-          {/* Col 4: Bank QR notice */}
+          {/* Col 4: Payment Methods (NO ACCOUNT NUMBER HERE!) */}
           <div>
             <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
-              Tài Khoản Nhận Cọc
+              Hình Thức Thanh Toán
             </h3>
-            <div className="bg-slate-900 border border-slate-800 p-3 rounded-lg text-xs space-y-1">
-              <p className="font-semibold text-slate-200">Ngân hàng: Quân Đội (MB Bank)</p>
-              <p>Chủ TK: SHOP MO HINH GHOBBY</p>
-              <p>Mã VietQR tự động sinh khi đặt đơn</p>
-              <p className="text-amber-400 text-[11px] pt-1">
-                * Đơn hàng có sẵn & Pre-order chỉ cọc 10% tiền hàng.
+            <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl text-xs space-y-2">
+              <div className="flex items-center space-x-2 text-slate-200 font-medium">
+                <span className="text-base">💳</span>
+                <span>Quét mã VietQR (Hỗ trợ 40+ app ngân hàng)</span>
+              </div>
+              <div className="flex items-center space-x-2 text-slate-200 font-medium">
+                <span className="text-base">📦</span>
+                <span>Thanh toán COD số tiền còn lại khi nhận hàng</span>
+              </div>
+              <p className="text-amber-400 text-[11px] pt-1 border-t border-slate-800">
+                * Mã VietQR và thông tin tài khoản sẽ hiển thị ngay sau khi quý khách hoàn tất đặt đơn trên web.
               </p>
             </div>
           </div>
         </div>
 
         <div className="border-t border-slate-900 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} GHobby.vn. Tất cả các quyền được bảo lưu.</p>
+          <p>© {new Date().getFullYear()} {settings.shopName}. Tất cả các quyền được bảo lưu.</p>
           <div className="mt-4 md:mt-0 space-x-4">
             <span>Chuẩn SEO Google</span>
             <span>•</span>
