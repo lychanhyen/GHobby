@@ -7,7 +7,6 @@ export type CustomerOrderGroup =
 
 export interface CustomerOrderGroupMeta {
   label: string;
-  emoji: string;
   description: string;
   badgeClass: string;
   statuses: string[];
@@ -20,37 +19,32 @@ export interface CustomerOrderGroupMeta {
 export const CUSTOMER_ORDER_GROUPS: Record<CustomerOrderGroup, CustomerOrderGroupMeta> = {
   PENDING: {
     label: "Đang chờ xử lý",
-    emoji: "🟡",
     description: "Đơn hàng đã được ghi nhận và đang chờ shop xác nhận.",
-    badgeClass: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    badgeClass: "bg-amber-50 text-amber-800 border-amber-200",
     statuses: ["PENDING_DEPOSIT", "PAYMENT_SUBMITTED", "PREORDER_PENDING"],
   },
   PROCESSING: {
     label: "Đang chuẩn bị hàng",
-    emoji: "🔵",
     description: "Shop đã xác nhận cọc và đang chuẩn bị hàng cho bạn.",
-    badgeClass: "bg-blue-100 text-blue-800 border-blue-200",
+    badgeClass: "bg-ink-100 text-ink-700 border-ink-200",
     statuses: ["DEPOSITED", "PREORDER_DEPOSITED", "PREORDER_ARRIVED"],
   },
   SHIPPING: {
     label: "Đang giao hàng",
-    emoji: "🚚",
     description: "Đơn hàng đang trên đường đến bạn.",
-    badgeClass: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    badgeClass: "bg-ink-50 text-ink-800 border-ink-300",
     statuses: ["SHIPPING"],
   },
   COMPLETED: {
     label: "Hoàn thành",
-    emoji: "🟢",
     description: "Đơn hàng đã được giao thành công.",
-    badgeClass: "bg-green-100 text-green-800 border-green-200",
+    badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200",
     statuses: ["COMPLETED"],
   },
   CANCELLED: {
     label: "Đã hủy",
-    emoji: "🔴",
     description: "Đơn hàng đã bị hủy hoặc hoàn trả.",
-    badgeClass: "bg-red-100 text-red-800 border-red-200",
+    badgeClass: "bg-accent-50 text-accent-700 border-accent-200",
     statuses: ["CANCELLED", "RETURNED"],
   },
 };

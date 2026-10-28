@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 interface BreadcrumbItem {
   name: string;
@@ -11,24 +12,30 @@ interface BreadcrumbProps {
 
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className="py-3 px-4 bg-slate-100 rounded-lg text-xs text-slate-600 mb-6">
-      <ol className="flex items-center flex-wrap gap-1.5">
+    <nav aria-label="Breadcrumb" className="py-3 text-xs text-ink-500">
+      <ol className="flex flex-wrap items-center gap-1.5">
         <li>
-          <Link href="/" className="hover:text-red-600 transition-colors font-medium">
+          <Link href="/" className="transition-colors duration-200 hover:text-ink-950">
             Trang Chủ
           </Link>
         </li>
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
-            <li key={item.url} className="flex items-center space-x-1.5">
-              <span className="text-slate-400">/</span>
+            <li key={item.url} className="flex min-w-0 items-center gap-1.5">
+              <ChevronRight className="h-3 w-3 shrink-0 text-ink-300" aria-hidden="true" />
               {isLast ? (
-                <span className="font-semibold text-slate-900 truncate max-w-[200px] sm:max-w-md" aria-current="page">
+                <span
+                  className="max-w-[200px] truncate font-medium text-ink-900 sm:max-w-md"
+                  aria-current="page"
+                >
                   {item.name}
                 </span>
               ) : (
-                <Link href={item.url} className="hover:text-red-600 transition-colors">
+                <Link
+                  href={item.url}
+                  className="transition-colors duration-200 hover:text-ink-950"
+                >
                   {item.name}
                 </Link>
               )}

@@ -140,74 +140,77 @@ export default function PosPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 flex items-center space-x-2">
-          <Store className="w-6 h-6 text-red-600" />
-          <span>Bán Tại Cửa Hàng (POS)</span>
-        </h1>
-        <p className="text-slate-600 mt-1">Xuất kho và thu tiền trực tiếp tại cửa hàng</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Bán hàng</p>
+          <h1 className="mt-1 flex items-center gap-2 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+            <Store className="h-5 w-5 text-ink-400" strokeWidth={1.8} />
+            Bán Tại Cửa Hàng (POS)
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">Xuất kho và thu tiền trực tiếp tại cửa hàng</p>
+        </div>
       </div>
 
       {message && (
-        <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
           {message}
         </div>
       )}
       {error && (
-        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+        <div className="rounded-md border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700">
+          {error}
+        </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
         {/* Danh sách sản phẩm */}
-        <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="card p-4 lg:col-span-3">
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm theo tên hoặc SKU..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="input pl-10"
             />
           </div>
 
           {loading ? (
-            <div className="text-center py-10 text-slate-500">Đang tải sản phẩm...</div>
+            <div className="py-12 text-center text-sm text-ink-500">Đang tải sản phẩm...</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[520px] overflow-y-auto pr-1">
+            <div className="grid max-h-[520px] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
               {filteredProducts.map((product) => (
                 <button
                   key={product.id}
                   onClick={() => addProduct(product)}
-                  className="flex items-center space-x-3 p-3 rounded-lg border border-slate-200 hover:border-red-400 hover:bg-red-50/40 text-left transition-colors"
+                  className="flex items-center gap-3 rounded-lg border border-ink-200 p-3 text-left transition-colors hover:border-ink-400 hover:bg-ink-50"
                 >
                   <img
                     src={product.imageUrl}
                     alt={product.name}
-                    className="w-12 h-12 rounded-lg object-cover"
+                    className="h-12 w-12 shrink-0 rounded-md border border-ink-100 object-cover"
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">{product.name}</p>
-                    <p className="text-xs text-slate-500 font-mono">{product.sku}</p>
-                    <p className="text-xs font-bold text-red-600 mt-1">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-ink-900">{product.name}</p>
+                    <p className="truncate font-mono text-[11px] text-ink-500">{product.sku}</p>
+                    <p className="mt-1 text-[12px] font-bold text-accent-700">
                       {formatCurrencyVND(product.sellingPrice)}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <span
-                      className={`text-xs font-bold px-2 py-1 rounded-full ${
-                        product.stockQuantity > 0
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {product.stockQuantity}
-                    </span>
-                  </div>
+                  <span
+                    className={`shrink-0 rounded-sm border px-2 py-0.5 text-[11px] font-bold ${
+                      product.stockQuantity > 0
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border-accent-200 bg-accent-50 text-accent-700"
+                    }`}
+                  >
+                    {product.stockQuantity}
+                  </span>
                 </button>
               ))}
               {filteredProducts.length === 0 && (
-                <p className="col-span-2 text-center py-10 text-slate-500">
+                <p className="col-span-2 py-10 text-center text-sm text-ink-500">
                   Không tìm thấy sản phẩm phù hợp
                 </p>
               )}
@@ -216,44 +219,48 @@ export default function PosPage() {
         </div>
 
         {/* Giỏ hàng POS */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col">
-          <h2 className="text-lg font-bold text-slate-900 mb-3">
-            Đơn hàng ({totalItems} sản phẩm)
+        <div className="card flex flex-col p-4 lg:col-span-2">
+          <h2 className="mb-3 flex items-center justify-between border-b border-ink-200 pb-3 text-sm font-bold text-ink-900">
+            Đơn hàng
+            <span className="text-[12px] font-medium text-ink-500">{totalItems} sản phẩm</span>
           </h2>
 
-          <div className="flex-1 space-y-3 max-h-[360px] overflow-y-auto">
+          <div className="max-h-[360px] flex-1 space-y-3 overflow-y-auto">
             {lines.length === 0 ? (
-              <p className="text-slate-500 text-sm text-center py-10">
+              <p className="py-10 text-center text-sm text-ink-500">
                 Chọn sản phẩm bên trái để thêm vào đơn
               </p>
             ) : (
               lines.map((line) => (
-                <div key={line.product.id} className="flex items-center space-x-2 border-b border-slate-100 pb-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">{line.product.name}</p>
-                    <p className="text-xs text-slate-500">
+                <div key={line.product.id} className="flex items-center gap-2 border-b border-ink-100 pb-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-ink-900">{line.product.name}</p>
+                    <p className="text-[12px] text-ink-500">
                       {formatCurrencyVND(line.product.sellingPrice)} × {line.quantity}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex shrink-0 items-center gap-1">
                     <button
                       onClick={() => changeQuantity(line.product.id, -1)}
-                      className="p-1 rounded border border-slate-300 hover:bg-slate-50"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-ink-200 text-ink-600 transition-colors hover:bg-ink-50"
+                      aria-label="Giảm số lượng"
                     >
-                      <Minus className="w-3 h-3" />
+                      <Minus className="h-3 w-3" />
                     </button>
-                    <span className="w-7 text-center text-sm font-bold">{line.quantity}</span>
+                    <span className="w-7 text-center text-sm font-bold text-ink-900">{line.quantity}</span>
                     <button
                       onClick={() => changeQuantity(line.product.id, 1)}
-                      className="p-1 rounded border border-slate-300 hover:bg-slate-50"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-ink-200 text-ink-600 transition-colors hover:bg-ink-50"
+                      aria-label="Tăng số lượng"
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus className="h-3 w-3" />
                     </button>
                     <button
                       onClick={() => removeLine(line.product.id)}
-                      className="p-1 ml-1 rounded text-red-600 hover:bg-red-50"
+                      className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-accent-50 hover:text-accent-700"
+                      aria-label="Xóa sản phẩm khỏi đơn"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -261,44 +268,46 @@ export default function PosPage() {
             )}
           </div>
 
-          <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
+          <div className="mt-4 space-y-4 border-t border-ink-200 pt-4">
             <div>
-              <p className="text-sm font-bold text-slate-700 mb-2">Phương thức thanh toán</p>
+              <p className="mb-2 text-[12px] font-bold text-ink-700">Phương thức thanh toán</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setPaymentMethod("CASH")}
-                  className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-lg border text-sm font-bold transition-colors ${
+                  className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-[12px] font-bold transition-colors ${
                     paymentMethod === "CASH"
-                      ? "border-red-600 bg-red-50 text-red-700"
-                      : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                      ? "border-ink-900 bg-ink-950 text-white"
+                      : "border-ink-200 text-ink-700 hover:border-ink-300 hover:bg-ink-50"
                   }`}
                 >
-                  <Banknote className="w-4 h-4" />
+                  <Banknote className="h-4 w-4" />
                   <span>Tiền mặt</span>
                 </button>
                 <button
                   onClick={() => setPaymentMethod("BANK_TRANSFER")}
-                  className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-lg border text-sm font-bold transition-colors ${
+                  className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-[12px] font-bold transition-colors ${
                     paymentMethod === "BANK_TRANSFER"
-                      ? "border-red-600 bg-red-50 text-red-700"
-                      : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                      ? "border-ink-900 bg-ink-950 text-white"
+                      : "border-ink-200 text-ink-700 hover:border-ink-300 hover:bg-ink-50"
                   }`}
                 >
-                  <QrCode className="w-4 h-4" />
+                  <QrCode className="h-4 w-4" />
                   <span>Chuyển khoản (QR)</span>
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-slate-700">Tổng tiền</span>
-              <span className="text-xl font-black text-red-600">{formatCurrencyVND(total)}</span>
+            <div className="flex items-end justify-between border-t border-ink-100 pt-3">
+              <span className="text-[12px] font-bold uppercase tracking-wide text-ink-500">
+                Tổng tiền
+              </span>
+              <span className="text-xl font-bold text-ink-950">{formatCurrencyVND(total)}</span>
             </div>
 
             <button
               onClick={handleCheckout}
               disabled={submitting || lines.length === 0}
-              className="w-full py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn-primary w-full py-3"
             >
               {submitting ? "Đang xuất kho..." : "XUẤT KHO & THANH TOÁN"}
             </button>

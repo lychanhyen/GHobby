@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Package } from "lucide-react";
-import { formatCurrencyVND } from "@/lib/utils";
 
 export default function InventoryLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -60,46 +59,74 @@ export default function InventoryLogsPage() {
 
   const getChangeTypeBadge = (type: string) => {
     if (type === "RESTOCK" || type === "IMPORT") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Nhập</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+          Nhập
+        </span>
+      );
     }
     if (type === "POS_SALE" || type === "EXPORT_MANUAL") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">Bán tại quán</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+          Bán tại quán
+        </span>
+      );
     }
     if (type === "ONLINE_SALE" || type === "ORDER_DEDUCT") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">Đơn online</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-ink-200 bg-ink-50 px-2 py-0.5 text-[11px] font-bold text-ink-700">
+          Đơn online
+        </span>
+      );
     }
     if (type === "ORDER_CANCEL_RESTOCK") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Hoàn kho</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+          Hoàn kho
+        </span>
+      );
     }
     if (type === "MANUAL_ADJUST" || type === "ADJUST") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Điều chỉnh</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-yellow-200 bg-yellow-50 px-2 py-0.5 text-[11px] font-bold text-yellow-700">
+          Điều chỉnh
+        </span>
+      );
     }
-    return <span className="px-2 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">{getChangeTypeLabel(type)}</span>;
+    return (
+      <span className="inline-flex items-center rounded-sm border border-ink-200 bg-ink-50 px-2 py-0.5 text-[11px] font-bold text-ink-600">
+        {getChangeTypeLabel(type)}
+      </span>
+    );
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-start gap-3">
           <Link
             href="/admin/kho"
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ink-200 text-ink-600 transition-colors hover:border-ink-300 hover:bg-white hover:text-ink-900"
+            aria-label="Quay lại quản lý kho"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Lịch Sử Biến Động Kho</h1>
-            <p className="text-slate-600 mt-1">Theo dõi tất cả thay đổi tồn kho</p>
+            <p className="eyebrow">Kho hàng</p>
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+              Lịch Sử Biến Động Kho
+            </h1>
+            <p className="mt-1 text-sm text-ink-500">Theo dõi tất cả thay đổi tồn kho</p>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div className="card p-4">
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+          className="input sm:max-w-xs"
         >
           <option value="">Tất cả loại biến động</option>
           <option value="POS_SALE">Bán tại quán</option>
@@ -112,51 +139,66 @@ export default function InventoryLogsPage() {
       </div>
 
       {/* Logs Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-ink-200 bg-white">
         {loading ? (
-          <div className="text-center py-8">Đang tải...</div>
+          <div className="px-5 py-12 text-center text-sm text-ink-500">Đang tải...</div>
+        ) : logs.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <Package className="mx-auto mb-2 h-8 w-8 text-ink-300" strokeWidth={1.5} />
+            <p className="text-sm font-bold text-ink-900">Chưa có bản ghi nào</p>
+            <p className="mt-1 text-sm text-ink-500">Biến động kho sẽ xuất hiện tại đây.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+            <table className="w-full min-w-[980px]">
+              <thead className="border-b border-ink-200 bg-ink-50 text-[11px] font-bold uppercase tracking-wide text-ink-500">
                 <tr>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Thời gian</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Sản phẩm</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Loại</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Số lượng</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Tồn sau</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Người thực hiện</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Ghi chú</th>
+                  <th className="px-4 py-3 text-left">Thời gian</th>
+                  <th className="px-4 py-3 text-left">Sản phẩm</th>
+                  <th className="px-4 py-3 text-left">Loại</th>
+                  <th className="px-4 py-3 text-left">Số lượng</th>
+                  <th className="px-4 py-3 text-left">Tồn sau</th>
+                  <th className="px-4 py-3 text-left">Người thực hiện</th>
+                  <th className="px-4 py-3 text-left">Ghi chú</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-ink-100">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                  <tr key={log.id} className="hover:bg-ink-50/70">
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-ink-600">
                       {new Date(log.createdAt).toLocaleString("vi-VN")}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-3">
                         <img
                           src={log.product?.imageUrl}
                           alt={log.product?.name}
-                          className="w-8 h-8 rounded-lg object-cover"
+                          className="h-8 w-8 shrink-0 rounded-md border border-ink-100 object-cover"
                         />
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">{log.product?.name}</p>
-                          <p className="text-xs text-slate-500 font-mono">{log.product?.sku}</p>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-ink-900">{log.product?.name}</p>
+                          <p className="truncate font-mono text-[11px] text-ink-500">{log.product?.sku}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{getChangeTypeBadge(log.changeType)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`text-sm font-bold ${log.quantityChange > 0 ? "text-green-600" : log.quantityChange < 0 ? "text-red-600" : "text-slate-600"}`}>
-                        {log.quantityChange > 0 ? "+" : ""}{log.quantityChange}
+                    <td className="whitespace-nowrap px-4 py-3.5">{getChangeTypeBadge(log.changeType)}</td>
+                    <td className="px-4 py-3.5">
+                      <span
+                        className={`text-sm font-bold ${
+                          log.quantityChange > 0
+                            ? "text-emerald-700"
+                            : log.quantityChange < 0
+                              ? "text-accent-700"
+                              : "text-ink-600"
+                        }`}
+                      >
+                        {log.quantityChange > 0 ? "+" : ""}
+                        {log.quantityChange}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">{log.stockAfter}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{log.performedBy}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{log.note || "-"}</td>
+                    <td className="px-4 py-3.5 text-sm font-bold text-ink-900">{log.stockAfter}</td>
+                    <td className="px-4 py-3.5 text-sm text-ink-600">{log.performedBy}</td>
+                    <td className="px-4 py-3.5 text-sm text-ink-600">{log.note || "-"}</td>
                   </tr>
                 ))}
               </tbody>

@@ -90,142 +90,163 @@ export default function RegisterPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-slate-600">Đang tải...</div>
+      <div className="container-page flex min-h-[60vh] items-center justify-center py-12 text-sm text-ink-500">
+        Đang tải...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-slate-900 mb-2">GHobby</h1>
-          <p className="text-slate-600">Tạo tài khoản khách hàng</p>
+    <div className="container-page flex min-h-[70vh] items-center justify-center py-10 sm:py-14">
+      <div className="w-full max-w-[460px]">
+        <div className="mb-6 text-center">
+          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded bg-ink-950 text-sm font-bold tracking-tight text-white">
+            GH
+          </span>
+          <p className="eyebrow mt-4">Tài khoản khách hàng</p>
+          <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-ink-950">GHobby</h1>
+          <p className="mt-1 text-sm text-ink-500">Tạo tài khoản khách hàng</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="rounded-lg border border-ink-200 bg-white p-6 shadow-card sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              <div className="rounded-md border border-accent-200 bg-accent-50 p-3 text-sm text-accent-700">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+              <label htmlFor="registerFullName" className="mb-1.5 block text-[13px] font-bold text-ink-800">
                 Họ và tên
               </label>
               <div className="relative">
-                <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <UserPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
                 <input
+                  id="registerFullName"
                   type="text"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="input pl-10"
                   placeholder="Nhập họ và tên"
+                  autoComplete="name"
                   required
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                Số điện thoại <span className="font-normal text-slate-400">(không bắt buộc)</span>
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="VD: 0905 123 456"
-                />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="registerPhone" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                  Số điện thoại{" "}
+                  <span className="font-normal text-ink-400">(không bắt buộc)</span>
+                </label>
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                  <input
+                    id="registerPhone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="input pl-10"
+                    placeholder="VD: 0905 123 456"
+                    autoComplete="tel"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="registerCity" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                  Tỉnh/Thành phố{" "}
+                  <span className="font-normal text-ink-400">(không bắt buộc)</span>
+                </label>
+                <div className="relative">
+                  <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                  <input
+                    id="registerCity"
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="input pl-10"
+                    placeholder="VD: Đà Nẵng"
+                    autoComplete="address-level2"
+                  />
+                </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                Tỉnh/Thành phố <span className="font-normal text-slate-400">(không bắt buộc)</span>
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="VD: Đà Nẵng"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+              <label htmlFor="registerUsername" className="mb-1.5 block text-[13px] font-bold text-ink-800">
                 Tên đăng nhập
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
                 <input
+                  id="registerUsername"
                   type="text"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="input pl-10"
                   placeholder="Nhập tên đăng nhập"
+                  autoComplete="username"
                   minLength={3}
                   required
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                Mật khẩu
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Tối thiểu 6 ký tự"
-                  minLength={6}
-                  required
-                />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="registerPassword" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                  Mật khẩu
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                  <input
+                    id="registerPassword"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="input pl-10"
+                    placeholder="Tối thiểu 6 ký tự"
+                    autoComplete="new-password"
+                    minLength={6}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="registerConfirmPassword" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                  Nhập lại mật khẩu
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                  <input
+                    id="registerConfirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="input pl-10"
+                    placeholder="Nhập lại mật khẩu"
+                    autoComplete="new-password"
+                    minLength={6}
+                    required
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                Nhập lại mật khẩu
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Nhập lại mật khẩu"
-                  minLength={6}
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
+            <button type="submit" disabled={loading} className="btn-primary h-11 w-full px-5">
               {loading ? "Đang đăng ký..." : "Đăng ký"}
             </button>
 
-            <p className="text-center text-sm text-slate-600">
+            <p className="border-t border-ink-100 pt-4 text-center text-sm text-ink-500">
               Đã có tài khoản?{" "}
-              <Link href="/login" className="font-bold text-red-600 hover:text-red-500">
+              <Link
+                href="/login"
+                className="font-bold text-accent-700 underline-offset-4 transition-colors duration-200 hover:text-accent-800 hover:underline"
+              >
                 Đăng nhập
               </Link>
             </p>

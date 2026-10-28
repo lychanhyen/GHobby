@@ -99,162 +99,168 @@ export default async function OrderSuccessPage({
   const orderTotal = order.totalProductAmount + order.shippingFee;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="text-center mb-8">
-        <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
-          <CheckCircle2 className="w-12 h-12 text-green-600" />
+    <div className="container-page py-8 sm:py-10">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-8 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50">
+            <CheckCircle2 className="h-7 w-7 text-emerald-700" />
+          </div>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink-950">
+            Đặt hàng thành công!
+          </h1>
+          <p className="mt-2 text-sm text-ink-500">
+            Mã đơn:{" "}
+            <span className="font-mono font-bold text-ink-950">#{order.orderCode}</span>
+          </p>
+          <span
+            className={`mt-3 inline-flex items-center rounded-sm border px-2 py-0.5 text-[11px] font-bold ${statusMeta.badgeClass}`}
+          >
+            {statusMeta.label}
+          </span>
         </div>
-        <h1 className="text-3xl font-black text-slate-900">Đặt hàng thành công!</h1>
-        <p className="text-slate-600 mt-2">
-          Mã đơn: <span className="font-mono font-black text-red-600">#{order.orderCode}</span>
-        </p>
-        <span
-          className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full border text-sm font-bold ${statusMeta.badgeClass}`}
-        >
-          <span>{statusMeta.emoji}</span>
-          <span>{statusMeta.label}</span>
-        </span>
-      </div>
 
-      <div className="space-y-6">
-        {showPayment && <OrderPaymentSection order={order} settings={settings} token={token} />}
+        <div className="space-y-5">
+          {showPayment && <OrderPaymentSection order={order} settings={settings} token={token} />}
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Thông tin nhận hàng</h2>
+          <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
+            <h2 className="text-base font-bold text-ink-950">Thông tin nhận hàng</h2>
 
-          <div className="flex items-start space-x-3 rounded-lg bg-slate-50 p-4 mb-4">
-            {isStorePickup ? (
-              <Store className="w-6 h-6 text-red-600 flex-shrink-0" />
-            ) : (
-              <Truck className="w-6 h-6 text-red-600 flex-shrink-0" />
-            )}
-            <div>
-              <p className="font-bold text-slate-900">
-                {getShippingMethodLabel(order.shippingMethod)}
-              </p>
+            <div className="mt-4 flex items-start gap-3 rounded-md bg-ink-50 p-4">
               {isStorePickup ? (
-                <>
-                  <p className="text-sm text-slate-600 mt-1 flex items-start gap-1.5">
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>{settings.shopAddress}</span>
-                  </p>
-                  <p className="text-sm text-slate-600 mt-1 flex items-center gap-1.5">
-                    <Phone className="w-4 h-4 flex-shrink-0" />
-                    <span>Hotline: {settings.shopHotline}</span>
-                  </p>
-                </>
+                <Store className="h-5 w-5 shrink-0 text-ink-700" />
               ) : (
-                <p className="text-sm text-slate-600 mt-1">
-                  {order.customerAddress}
-                  {order.provinceCity ? `, ${order.provinceCity}` : ""}
-                </p>
+                <Truck className="h-5 w-5 shrink-0 text-ink-700" />
               )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Người nhận</p>
-              <p className="font-bold text-slate-900">{order.customerName}</p>
-              <p className="text-slate-600">{order.customerPhone}</p>
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Ngày đặt</p>
-              <p className="text-slate-900">
-                {new Date(order.createdAt).toLocaleString("vi-VN")}
-              </p>
-              <p className="text-slate-600 flex items-center gap-1.5 mt-1">
-                <Clock3 className="w-4 h-4" />
-                <span>{getOrderStatusLabel(order.status)}</span>
-              </p>
-            </div>
-          </div>
-
-          {order.note && (
-            <p className="mt-4 text-sm text-slate-600">
-              <span className="font-bold text-slate-900">Ghi chú:</span> {order.note}
-            </p>
-          )}
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center space-x-2">
-            <Package className="w-5 h-5 text-red-600" />
-            <span>Chi tiết đơn hàng</span>
-          </h2>
-
-          <div className="space-y-4">
-            {order.items.map((item) => (
-              <div
-                key={item.id}
-                className="flex space-x-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0"
-              >
-                <img
-                  src={item.product.imageUrl}
-                  alt={item.productName}
-                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900">{item.productName}</h3>
-                  <p className="text-sm text-slate-500">
-                    Số lượng: {item.quantity} × {formatCurrencyVND(item.priceAtOrder)}
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-ink-950">
+                  {getShippingMethodLabel(order.shippingMethod)}
+                </p>
+                {isStorePickup ? (
+                  <>
+                    <p className="mt-1 flex items-start gap-1.5 text-sm text-ink-600">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" />
+                      <span>{settings.shopAddress}</span>
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-600">
+                      <Phone className="h-4 w-4 shrink-0 text-ink-400" />
+                      <span>Hotline: {settings.shopHotline}</span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-1 text-sm leading-relaxed text-ink-600">
+                    {order.customerAddress}
+                    {order.provinceCity ? `, ${order.provinceCity}` : ""}
                   </p>
-                  <p className="text-sm font-bold text-slate-900 mt-1">
-                    {formatCurrencyVND(item.priceAtOrder * item.quantity)}
-                  </p>
-                </div>
+                )}
               </div>
-            ))}
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+              <div>
+                <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-ink-500">
+                  Người nhận
+                </p>
+                <p className="font-bold text-ink-950">{order.customerName}</p>
+                <p className="text-ink-600">{order.customerPhone}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-ink-500">
+                  Ngày đặt
+                </p>
+                <p className="text-ink-900">
+                  {new Date(order.createdAt).toLocaleString("vi-VN")}
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-ink-600">
+                  <Clock3 className="h-4 w-4 text-ink-400" />
+                  <span>{getOrderStatusLabel(order.status)}</span>
+                </p>
+              </div>
+            </div>
+
+            {order.note && (
+              <p className="mt-4 text-sm leading-relaxed text-ink-600">
+                <span className="font-bold text-ink-950">Ghi chú:</span> {order.note}
+              </p>
+            )}
           </div>
 
-          <div className="mt-6 pt-4 border-t border-slate-200 space-y-2 text-sm">
-            <div className="flex justify-between text-slate-600">
-              <span>Tổng tiền hàng</span>
-              <span>{formatCurrencyVND(order.totalProductAmount)}</span>
+          <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
+            <h2 className="flex items-center gap-2 text-base font-bold text-ink-950">
+              <Package className="h-4 w-4 text-ink-500" />
+              <span>Chi tiết đơn hàng</span>
+            </h2>
+
+            <div className="mt-4 space-y-4">
+              {order.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex gap-3.5 border-b border-ink-100 pb-4 last:border-0 last:pb-0"
+                >
+                  <img
+                    src={item.product.imageUrl}
+                    alt={item.productName}
+                    className="h-20 w-20 shrink-0 rounded-md border border-ink-100 bg-ink-50 object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-bold leading-snug text-ink-950">{item.productName}</h3>
+                    <p className="mt-1 text-xs text-ink-500">
+                      Số lượng: {item.quantity} × {formatCurrencyVND(item.priceAtOrder)}
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-ink-950">
+                      {formatCurrencyVND(item.priceAtOrder * item.quantity)}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between text-slate-600">
-              <span>Phí vận chuyển</span>
-              <span>
-                {order.shippingFee === 0 ? "Miễn phí" : formatCurrencyVND(order.shippingFee)}
-              </span>
-            </div>
-            <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-slate-100">
-              <span>Tổng giá trị đơn hàng</span>
-              <span>{formatCurrencyVND(orderTotal)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-red-600">
-              <span>Tiền cọc cần thanh toán (10%)</span>
-              <span>{formatCurrencyVND(order.depositRequired)}</span>
+
+            <div className="mt-5 space-y-2 border-t border-ink-200 pt-4 text-sm">
+              <div className="flex items-center justify-between gap-3 text-ink-600">
+                <span>Tổng tiền hàng</span>
+                <span className="font-medium text-ink-900">
+                  {formatCurrencyVND(order.totalProductAmount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-ink-600">
+                <span>Phí vận chuyển</span>
+                <span className="font-medium text-ink-900">
+                  {order.shippingFee === 0 ? "Miễn phí" : formatCurrencyVND(order.shippingFee)}
+                </span>
+              </div>
+              <div className="flex items-end justify-between gap-3 border-t border-ink-100 pt-2.5">
+                <span className="font-bold text-ink-900">Tổng giá trị đơn hàng</span>
+                <span className="text-lg font-bold leading-none tracking-tight text-ink-950">
+                  {formatCurrencyVND(orderTotal)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3 font-bold text-amber-700">
+                <span>Tiền cọc cần thanh toán (10%)</span>
+                <span>{formatCurrencyVND(order.depositRequired)}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {isStorePickup && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            <p className="font-bold">Lưu ý khi nhận hàng tại cửa hàng</p>
-            <p className="mt-1">
-              Vui lòng chờ shop xác nhận đơn hàng trước khi đến nhận. Khi đến, bạn đọc mã đơn{" "}
-              <span className="font-mono font-bold">{order.orderCode}</span> để được hỗ trợ nhanh.
-            </p>
+          {isStorePickup && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-800">
+              <p className="font-bold">Lưu ý khi nhận hàng tại cửa hàng</p>
+              <p className="mt-1">
+                Vui lòng chờ shop xác nhận đơn hàng trước khi đến nhận. Khi đến, bạn đọc mã đơn{" "}
+                <span className="font-mono font-bold">{order.orderCode}</span> để được hỗ trợ nhanh.
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2.5 sm:flex-row">
+            <Link href="/profile/don-hang" className="btn-dark h-11 flex-1 gap-2 px-5">
+              <Package className="h-4 w-4" />
+              <span>Theo dõi đơn hàng</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/" className="btn-outline h-11 flex-1 gap-2 px-5">
+              <ShoppingBag className="h-4 w-4" />
+              <span>Tiếp tục mua sắm</span>
+            </Link>
           </div>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            href="/profile/don-hang"
-            className="flex-1 inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 transition-colors"
-          >
-            <Package className="w-5 h-5" />
-            <span>Theo dõi đơn hàng</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/"
-            className="flex-1 inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-lg border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition-colors"
-          >
-            <ShoppingBag className="w-5 h-5" />
-            <span>Tiếp tục mua sắm</span>
-          </Link>
         </div>
       </div>
     </div>

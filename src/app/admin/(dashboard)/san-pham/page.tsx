@@ -108,50 +108,68 @@ export default function ProductsPage() {
 
   const getProductStatusBadge = (product: any) => {
     if (!product.isActive) {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">Ẩn</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-ink-200 bg-ink-50 px-2 py-0.5 text-[11px] font-bold text-ink-600">
+          Ẩn
+        </span>
+      );
     }
     if (product.productType === "PRE_ORDER") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">Pre-order</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+          Pre-order
+        </span>
+      );
     }
     if (product.stockQuantity > 0) {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Có sẵn</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+          Có sẵn
+        </span>
+      );
     }
-    return <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Hết hàng</span>;
+    return (
+      <span className="inline-flex items-center rounded-sm border border-accent-200 bg-accent-50 px-2 py-0.5 text-[11px] font-bold text-accent-700">
+        Hết hàng
+      </span>
+    );
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Quản Lý Sản Phẩm</h1>
-          <p className="text-slate-600 mt-1">Quản lý danh sách sản phẩm</p>
+          <p className="eyebrow">Sản phẩm</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+            Quản Lý Sản Phẩm
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">Quản lý danh sách sản phẩm</p>
         </div>
-        <Link
-          href="/admin/san-pham/tao-moi"
-          className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Thêm sản phẩm</span>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/san-pham/tao-moi" className="btn-primary">
+            <Plus className="h-4 w-4" />
+            Thêm sản phẩm
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="card p-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
             <input
               type="text"
               placeholder="Tìm theo tên, SKU..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="input pl-10"
             />
           </div>
           <select
             value={filters.categoryId}
             onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}
-            className="px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="input"
           >
             <option value="">Tất cả danh mục</option>
             {categories.map((cat) => (
@@ -163,7 +181,7 @@ export default function ProductsPage() {
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="input"
           >
             <option value="">Tất cả trạng thái</option>
             <option value="active">Đang hiển thị</option>
@@ -173,64 +191,77 @@ export default function ProductsPage() {
       </div>
 
       {/* Products Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-ink-200 bg-white">
         {loading ? (
-          <div className="text-center py-8">Đang tải...</div>
+          <div className="px-5 py-12 text-center text-sm text-ink-500">Đang tải...</div>
+        ) : products.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm font-bold text-ink-900">Chưa có sản phẩm nào</p>
+            <p className="mt-1 text-sm text-ink-500">Thêm sản phẩm mới để bắt đầu kinh doanh.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+            <table className="w-full min-w-[880px]">
+              <thead className="border-b border-ink-200 bg-ink-50 text-[11px] font-bold uppercase tracking-wide text-ink-500">
                 <tr>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Sản phẩm</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">SKU</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Danh mục</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Giá bán</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Tồn kho</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Trạng thái</th>
-                  <th className="text-right text-xs font-bold text-slate-600 uppercase px-6 py-3">Thao tác</th>
+                  <th className="px-4 py-3 text-left">Sản phẩm</th>
+                  <th className="px-4 py-3 text-left">SKU</th>
+                  <th className="px-4 py-3 text-left">Danh mục</th>
+                  <th className="px-4 py-3 text-left">Giá bán</th>
+                  <th className="px-4 py-3 text-left">Tồn kho</th>
+                  <th className="px-4 py-3 text-left">Trạng thái</th>
+                  <th className="px-4 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-ink-100">
                 {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
+                  <tr key={product.id} className="hover:bg-ink-50/70">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-3">
                         <img
                           src={product.imageUrl}
                           alt={product.name}
-                          className="w-12 h-12 rounded-lg object-cover"
+                          className="h-10 w-10 shrink-0 rounded-md border border-ink-100 object-cover"
                         />
-                        <div>
-                          <p className="font-bold text-slate-900 text-sm">{product.name}</p>
-                          <p className="text-xs text-slate-500">{product.brand}</p>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-ink-900">{product.name}</p>
+                          <p className="truncate text-[12px] text-ink-500">{product.brand}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 font-mono text-sm">{product.sku}</td>
-                    <td className="px-6 py-4 text-slate-600 text-sm">{product.category?.name}</td>
-                    <td className="px-6 py-4 text-slate-900 font-bold">{formatCurrencyVND(product.sellingPrice)}</td>
-                    <td className="px-6 py-4 text-slate-600">{product.stockQuantity}</td>
-                    <td className="px-6 py-4">{getProductStatusBadge(product)}</td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <Link
-                        href={`/admin/san-pham/${product.id}`}
-                        className="inline-block p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Link>
-                      <button
-                        onClick={() => toggleProductStatus(product)}
-                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                      >
-                        {product.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(product)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        aria-label="Xóa sản phẩm"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <td className="whitespace-nowrap px-4 py-3.5 font-mono text-[13px] text-ink-600">
+                      {product.sku}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-ink-600">{product.category?.name}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm font-bold text-ink-900">
+                      {formatCurrencyVND(product.sellingPrice)}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-ink-600">{product.stockQuantity}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5">{getProductStatusBadge(product)}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link
+                          href={`/admin/san-pham/${product.id}`}
+                          title="Chỉnh sửa sản phẩm"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                        <button
+                          onClick={() => toggleProductStatus(product)}
+                          title={product.isActive ? "Ẩn sản phẩm" : "Hiển thị sản phẩm"}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900"
+                        >
+                          {product.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(product)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-500 transition-colors hover:bg-accent-50 hover:text-accent-700"
+                          aria-label="Xóa sản phẩm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -242,26 +273,30 @@ export default function ProductsPage() {
 
       {/* Modal xác nhận xóa */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Xác nhận xóa sản phẩm</h3>
-            <p className="text-slate-600 mb-6">
-              Bạn có chắc chắn muốn xóa sản phẩm{" "}
-              <span className="font-bold text-slate-900">{deleteTarget.name}</span>? Hành động này
-              sẽ ẩn sản phẩm khỏi cửa hàng.
-            </p>
-            <div className="flex justify-end space-x-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-lift">
+            <div className="border-b border-ink-200 px-5 py-4">
+              <h3 className="text-sm font-bold text-ink-950">Xác nhận xóa sản phẩm</h3>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-sm leading-relaxed text-ink-600">
+                Bạn có chắc chắn muốn xóa sản phẩm{" "}
+                <span className="font-bold text-ink-900">{deleteTarget.name}</span>? Hành động này
+                sẽ ẩn sản phẩm khỏi cửa hàng.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-ink-200 bg-ink-50 px-5 py-3.5">
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleting}
-                className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="btn-outline"
               >
                 Hủy
               </button>
               <button
                 onClick={handleDeleteProduct}
                 disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50"
+                className="btn-primary"
               >
                 {deleting ? "Đang xóa..." : "Xóa"}
               </button>

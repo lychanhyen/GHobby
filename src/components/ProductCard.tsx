@@ -20,7 +20,10 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const isOutOfStock = product.productType === "IN_STOCK" && product.stockQuantity <= 0;
   const isPreOrder = product.productType === "PRE_ORDER";
-  const isLowStock = product.productType === "IN_STOCK" && product.stockQuantity > 0 && product.stockQuantity <= product.minStockAlert;
+  const isLowStock =
+    product.productType === "IN_STOCK" &&
+    product.stockQuantity > 0 &&
+    product.stockQuantity <= product.minStockAlert;
   const favorite = isFavorite(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -30,8 +33,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
     const result = addItem(product, 1);
     setFeedback(
       result.ok
-        ? { type: "success", text: "Đã thêm sản phẩm vào giỏ hàng" }
-        : { type: "error", text: result.message || "Không thể thêm sản phẩm vào giỏ hàng" }
+        ? { type: "success", text: "Đã thêm vào giỏ" }
+        : { type: "error", text: result.message || "Không thể thêm vào giỏ" }
     );
   };
 
@@ -42,43 +45,41 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   };
 
   return (
-    <article className="group relative bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
-      {/* Image Container with Fixed Aspect Ratio to prevent CLS */}
+    <article className="group relative flex flex-col overflow-hidden rounded-lg border border-ink-200 bg-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lift">
       <Link
         href={`/san-pham/${product.slug}`}
-        className="relative block w-full aspect-square bg-slate-100 overflow-hidden"
+        prefetch={true}
+        className="relative block aspect-square w-full overflow-hidden bg-ink-50"
       >
         <Image
           src={product.imageUrl}
           alt={`Mô hình ${product.name} - ${product.scale} chính hãng ${product.brand}`}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           priority={priority}
           loading={priority ? undefined : "lazy"}
         />
 
-        {/* Status Badges */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
           {isPreOrder && (
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500 text-white shadow-sm">
-              PRE-ORDER (CỌC 10%)
+            <span className="rounded-sm bg-amber-100/95 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900 backdrop-blur-sm">
+              Pre-order
             </span>
           )}
           {isOutOfStock && (
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-700 text-white shadow-sm">
-              HẾT HÀNG
+            <span className="rounded-sm bg-ink-950/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
+              Hết hàng
             </span>
           )}
-          {isLowStock && (
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-600 text-white shadow-sm">
-              CHỈ CÒN {product.stockQuantity} HỘP
+          {isLowStock && !isOutOfStock && (
+            <span className="rounded-sm bg-white/95 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-700 backdrop-blur-sm">
+              Còn {product.stockQuantity}
             </span>
           )}
         </div>
 
-        {/* Scale Badge */}
-        <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-900/80 text-white backdrop-blur-sm">
+        <span className="absolute bottom-2 left-2 rounded-sm bg-white/90 px-1.5 py-0.5 font-mono text-[10px] font-medium text-ink-600 backdrop-blur-sm">
           {product.scale}
         </span>
       </Link>
@@ -89,69 +90,80 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         aria-pressed={favorite}
         aria-label={favorite ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
         title={favorite ? "Xóa khỏi yêu thích" : "Thêm vào yêu thích"}
-        className={`absolute top-2 right-2 z-10 p-2 rounded-full shadow-sm backdrop-blur-sm transition-colors ${
+        className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
           favorite
-            ? "bg-white text-red-600 hover:bg-red-50"
-            : "bg-white/90 text-slate-600 hover:bg-white hover:text-red-600"
+            ? "border-accent-200 bg-white text-accent-600"
+            : "border-transparent bg-white/90 text-ink-500 opacity-100 hover:border-ink-200 hover:text-accent-600 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
         }`}
       >
-        <Heart className={`w-4 h-4 ${favorite ? "fill-red-600" : ""}`} />
+        <Heart className={`h-3.5 w-3.5 ${favorite ? "fill-accent-600" : ""}`} />
       </button>
 
-      {/* Info Container */}
-      <div className="p-4 flex-1 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-medium text-slate-600">{product.brand}</span>
-            <span className="text-[11px] font-mono text-slate-400">{product.sku}</span>
-          </div>
-
-          <h3 className="text-sm font-bold text-slate-900 line-clamp-2 group-hover:text-red-600 transition-colors leading-snug">
-            <Link href={`/san-pham/${product.slug}`}>
-              {product.name}
-            </Link>
-          </h3>
-
-          <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-            Series: {product.series}
-          </p>
+      <div className="flex flex-1 flex-col p-3.5 sm:p-4">
+        <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">
+          <span className="truncate">{product.brand}</span>
+          <span className="shrink-0 font-mono text-[10px] font-normal normal-case tracking-normal text-ink-300">
+            {product.sku}
+          </span>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-          <div>
-            <span className="text-base font-extrabold text-red-600 block">
+        <h3 className="mt-1.5 line-clamp-2 min-h-[2.5rem] text-[13px] font-bold leading-snug text-ink-950 sm:text-sm">
+          <Link
+            href={`/san-pham/${product.slug}`}
+            prefetch={true}
+            className="transition-colors hover:text-accent-700"
+          >
+            {product.name}
+          </Link>
+        </h3>
+
+        <p className="mt-1 line-clamp-1 text-[11px] text-ink-500 sm:text-xs">
+          {product.series}
+        </p>
+
+        <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+          <div className="min-w-0">
+            <p className="text-[15px] font-bold leading-none text-ink-950">
               {formatCurrencyVND(product.sellingPrice)}
-            </span>
-            {isPreOrder && product.expectedReleaseDate && (
-              <span className="text-[10px] text-amber-700 font-medium block">
-                Phát hành: {typeof product.expectedReleaseDate === "string" ? product.expectedReleaseDate : new Date(product.expectedReleaseDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
-              </span>
+            </p>
+            {isPreOrder ? (
+              <p className="mt-1.5 text-[10px] font-medium text-amber-700">
+                Cọc 10% · {formatCurrencyVND(Math.round(product.sellingPrice * 0.1))}
+              </p>
+            ) : isOutOfStock ? (
+              <p className="mt-1.5 text-[10px] font-medium text-ink-400">Tạm hết hàng</p>
+            ) : (
+              <p className="mt-1.5 text-[10px] font-medium text-ink-400">
+                Còn {product.stockQuantity} hộp
+              </p>
             )}
           </div>
 
           {!isOutOfStock ? (
             <button
               onClick={handleAddToCart}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white hover:bg-red-500 transition-colors flex items-center space-x-1"
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-ink-300 px-2.5 text-[11px] font-bold text-ink-800 transition-colors duration-200 hover:border-ink-950 hover:bg-ink-950 hover:text-white"
             >
-              <ShoppingCart className="w-3 h-3" />
-              <span>{isPreOrder ? "Đặt trước" : "Thêm"}</span>
+              <ShoppingCart className="h-3.5 w-3.5" />
+              <span>{isPreOrder ? "Đặt" : "Thêm"}</span>
             </button>
           ) : (
             <Link
               href={`/san-pham/${product.slug}`}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-400 text-white cursor-not-allowed"
+              prefetch={true}
+              className="inline-flex h-8 shrink-0 items-center rounded-md border border-ink-200 px-2.5 text-[11px] font-bold text-ink-400 transition-colors hover:border-ink-300 hover:text-ink-600"
             >
-              Hết hàng
+              Xem
             </Link>
           )}
         </div>
+
         {feedback && (
           <p
             role="status"
             aria-live="polite"
-            className={`mt-2 text-[11px] font-medium ${
-              feedback.type === "success" ? "text-emerald-700" : "text-red-600"
+            className={`mt-2 text-[10px] font-medium ${
+              feedback.type === "success" ? "text-emerald-700" : "text-accent-700"
             }`}
           >
             {feedback.text}

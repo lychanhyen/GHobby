@@ -39,41 +39,46 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Trang cá nhân</h1>
-        <p className="text-slate-600 mt-2">Quản lý thông tin tài khoản và đơn hàng của bạn</p>
+    <div className="container-page py-8">
+      <div className="mb-7 border-b border-ink-200 pb-5">
+        <p className="eyebrow">Tài khoản</p>
+        <h1 className="mt-1.5 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+          Trang cá nhân
+        </h1>
+        <p className="mt-1 text-sm text-ink-500">
+          Quản lý thông tin tài khoản và đơn hàng của bạn
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         {/* Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <User className="w-6 h-6 text-red-600" />
+        <div className="lg:self-start">
+          <div className="overflow-hidden rounded-lg border border-ink-200 bg-white">
+            <div className="border-b border-ink-200 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-200 bg-ink-50">
+                  <User className="h-5 w-5 text-ink-600" />
                 </div>
-                <div>
-                  <p className="font-semibold text-slate-900">Khách hàng</p>
-                  <p className="text-sm text-slate-500">Thành viên</p>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-ink-950">Khách hàng</p>
+                  <p className="mt-0.5 text-xs text-ink-500">Thành viên</p>
                 </div>
               </div>
             </div>
             <nav className="p-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const itemClassName = `w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                const itemClassName = `flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition-colors duration-200 ${
                   activeTab === item.id
-                    ? "bg-red-50 text-red-700"
-                    : "text-slate-700 hover:bg-slate-50"
+                    ? "bg-ink-100 font-bold text-ink-950"
+                    : "font-medium text-ink-600 hover:bg-ink-50 hover:text-ink-950"
                 }`;
 
                 if (item.href) {
                   return (
                     <Link key={item.id} href={item.href} className={itemClassName}>
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label}</span>
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span>{item.label}</span>
                     </Link>
                   );
                 }
@@ -81,132 +86,147 @@ export default function ProfilePage() {
                 return (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => setActiveTab(item.id)}
                     className={itemClassName}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span>{item.label}</span>
                   </button>
                 );
               })}
+
+              <div className="my-2 border-t border-ink-100" />
+
               <button
+                type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left text-slate-700 hover:bg-slate-50 mt-2"
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-medium text-accent-700 transition-colors duration-200 hover:bg-accent-50"
               >
-                <LogOut className="w-5 h-5" />
-                <span className="font-medium">Đăng xuất</span>
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span>Đăng xuất</span>
               </button>
             </nav>
           </div>
         </div>
 
         {/* Content */}
-        <div className="lg:col-span-3">
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            {activeTab === "info" && (
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Thông tin cá nhân</h2>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Họ và tên
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                        placeholder="Nhập họ và tên"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Số điện thoại
-                      </label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="tel"
-                          className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                          placeholder="Nhập số điện thoại"
-                        />
-                      </div>
-                    </div>
+        <div className="min-w-0 rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
+          {activeTab === "info" && (
+            <div>
+              <h2 className="text-base font-bold text-ink-950">Thông tin cá nhân</h2>
+              <p className="mt-1 text-xs text-ink-500">
+                Thông tin dùng để liên hệ và giao hàng.
+              </p>
+
+              <div className="mt-5 space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label htmlFor="profileFullName" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                      Họ và tên
+                    </label>
+                    <input
+                      id="profileFullName"
+                      type="text"
+                      className="input"
+                      placeholder="Nhập họ và tên"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Email
+                    <label htmlFor="profilePhone" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                      Số điện thoại
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
                       <input
-                        type="email"
-                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                        placeholder="Nhập email"
+                        id="profilePhone"
+                        type="tel"
+                        className="input pl-10"
+                        placeholder="Nhập số điện thoại"
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Địa chỉ giao hàng
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-                      <textarea
-                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                        rows={3}
-                        placeholder="Nhập địa chỉ giao hàng"
-                      />
-                    </div>
-                  </div>
-                  <button className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                    Cập nhật thông tin
-                  </button>
                 </div>
+
+                <div>
+                  <label htmlFor="profileEmail" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                    <input
+                      id="profileEmail"
+                      type="email"
+                      className="input pl-10"
+                      placeholder="Nhập email"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="profileAddress" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                    Địa chỉ giao hàng
+                  </label>
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-ink-400" />
+                    <textarea
+                      id="profileAddress"
+                      className="input pl-10"
+                      rows={3}
+                      placeholder="Nhập địa chỉ giao hàng"
+                    />
+                  </div>
+                </div>
+
+                <button type="button" className="btn-dark px-5">
+                  Cập nhật thông tin
+                </button>
               </div>
-            )}
+            </div>
+          )}
 
-            {activeTab === "favorites" && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900">Sản phẩm yêu thích</h2>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {favorites.length > 0
-                        ? `${favorites.length} sản phẩm đã lưu`
-                        : "Danh sách sản phẩm bạn quan tâm"}
-                    </p>
-                  </div>
-                  {favorites.length > 0 && (
-                    <button
-                      onClick={clearWishlist}
-                      className="inline-flex items-center space-x-1.5 text-sm font-bold text-slate-500 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Xóa tất cả</span>
-                    </button>
-                  )}
+          {activeTab === "favorites" && (
+            <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-ink-950">Sản phẩm yêu thích</h2>
+                  <p className="mt-1 text-xs text-ink-500">
+                    {favorites.length > 0
+                      ? `${favorites.length} sản phẩm đã lưu`
+                      : "Danh sách sản phẩm bạn quan tâm"}
+                  </p>
                 </div>
-
-                {!wishlistHydrated ? (
-                  <div className="text-center py-12 text-slate-500">Đang tải...</div>
-                ) : favorites.length === 0 ? (
-                  <div className="text-center py-12 text-slate-500">
-                    <Heart className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-                    <p>Chưa có sản phẩm yêu thích</p>
-                    <p className="text-sm mt-1">
-                      Nhấn vào biểu tượng trái tim trên sản phẩm để lưu lại.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {favorites.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
+                {favorites.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearWishlist}
+                    className="inline-flex items-center gap-1.5 self-start text-xs font-bold text-ink-500 transition-colors duration-200 hover:text-accent-700"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Xóa tất cả</span>
+                  </button>
                 )}
               </div>
-            )}
-          </div>
+
+              {!wishlistHydrated ? (
+                <div className="py-12 text-center text-sm text-ink-500">Đang tải...</div>
+              ) : favorites.length === 0 ? (
+                <div className="mt-5 rounded-lg border border-dashed border-ink-200 px-5 py-12 text-center">
+                  <Heart className="mx-auto h-8 w-8 text-ink-300" />
+                  <p className="mt-3 text-sm font-bold text-ink-800">Chưa có sản phẩm yêu thích</p>
+                  <p className="mt-1 text-xs text-ink-500">
+                    Nhấn vào biểu tượng trái tim trên sản phẩm để lưu lại.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                  {favorites.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

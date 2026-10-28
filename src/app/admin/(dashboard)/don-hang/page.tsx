@@ -63,11 +63,11 @@ export default function OrdersPage() {
   };
 
   const getStatusColor = (status: string) => {
-    if (status === "COMPLETED") return "bg-green-100 text-green-700";
-    if (status === "CANCELLED" || status === "RETURNED") return "bg-red-100 text-red-700";
-    if (status === "DEPOSITED" || status === "SHIPPING" || status === "PREORDER_DEPOSITED" || status === "PREORDER_ARRIVED") return "bg-blue-100 text-blue-700";
-    if (status === "PAYMENT_SUBMITTED") return "bg-yellow-100 text-yellow-700";
-    return "bg-amber-100 text-amber-700";
+    if (status === "COMPLETED") return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    if (status === "CANCELLED" || status === "RETURNED") return "border-accent-200 bg-accent-50 text-accent-700";
+    if (status === "DEPOSITED" || status === "SHIPPING" || status === "PREORDER_DEPOSITED" || status === "PREORDER_ARRIVED") return "border-ink-200 bg-ink-50 text-ink-700";
+    if (status === "PAYMENT_SUBMITTED") return "border-amber-200 bg-amber-50 text-amber-700";
+    return "border-amber-200 bg-amber-50 text-amber-700";
   };
 
   const statusTabs = [
@@ -84,21 +84,26 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900">Quản Lý Đơn Hàng</h1>
-        <p className="text-slate-600 mt-1">Quản lý và xử lý đơn hàng</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Đơn hàng</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+            Quản Lý Đơn Hàng
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">Quản lý và xử lý đơn hàng</p>
+        </div>
       </div>
 
       {/* Status Tabs */}
-      <div className="bg-white rounded-xl border border-slate-200 p-2 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 rounded-lg border border-ink-200 bg-white p-1.5">
         {statusTabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setFilters({ ...filters, status: tab.value })}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`rounded-md px-3 py-1.5 text-[12px] font-bold transition-colors ${
               filters.status === tab.value
-                ? "bg-red-600 text-white"
-                : "text-slate-700 hover:bg-slate-100"
+                ? "bg-ink-950 text-white"
+                : "text-ink-600 hover:bg-ink-100 hover:text-ink-900"
             }`}
           >
             {tab.label}
@@ -107,68 +112,83 @@ export default function OrdersPage() {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div className="card p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
           <input
             type="text"
             placeholder="Tìm theo mã đơn, tên khách hàng, số điện thoại..."
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="input pl-10"
           />
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-ink-200 bg-white">
         {loading ? (
-          <div className="text-center py-8">Đang tải...</div>
+          <div className="px-5 py-12 text-center text-sm text-ink-500">Đang tải...</div>
+        ) : orders.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm font-bold text-ink-900">Chưa có đơn hàng nào</p>
+            <p className="mt-1 text-sm text-ink-500">Đơn hàng mới sẽ xuất hiện tại đây.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+            <table className="w-full min-w-[960px]">
+              <thead className="border-b border-ink-200 bg-ink-50 text-[11px] font-bold uppercase tracking-wide text-ink-500">
                 <tr>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Mã đơn</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Khách hàng</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Tổng tiền</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Tiền cọc</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Trạng thái</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Ngày đặt</th>
-                  <th className="text-right text-xs font-bold text-slate-600 uppercase px-6 py-3">Thao tác</th>
+                  <th className="px-4 py-3 text-left">Mã đơn</th>
+                  <th className="px-4 py-3 text-left">Khách hàng</th>
+                  <th className="px-4 py-3 text-left">Tổng tiền</th>
+                  <th className="px-4 py-3 text-left">Tiền cọc</th>
+                  <th className="px-4 py-3 text-left">Trạng thái</th>
+                  <th className="px-4 py-3 text-left">Ngày đặt</th>
+                  <th className="px-4 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-ink-100">
                 {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-red-600 font-mono">{order.orderCode}</span>
+                  <tr key={order.id} className="hover:bg-ink-50/70">
+                    <td className="whitespace-nowrap px-4 py-3.5">
+                      <span className="font-mono text-sm font-bold text-accent-700">{order.orderCode}</span>
                       {order.isPreOrderOrder && (
-                        <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-amber-100 text-amber-700">Pre-order</span>
+                        <span className="ml-2 rounded-sm border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+                          Pre-order
+                        </span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-slate-900 text-sm">{order.customerName}</p>
-                      <p className="text-xs text-slate-500">{order.customerPhone}</p>
+                    <td className="px-4 py-3.5">
+                      <p className="text-sm font-bold text-ink-900">{order.customerName}</p>
+                      <p className="text-[12px] text-ink-500">{order.customerPhone}</p>
                     </td>
-                    <td className="px-6 py-4 text-slate-900 font-bold">{formatCurrencyVND(order.totalProductAmount)}</td>
-                    <td className="px-6 py-4 text-red-600 font-bold">{formatCurrencyVND(order.depositRequired)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(order.status)}`}>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm font-bold text-ink-900">
+                      {formatCurrencyVND(order.totalProductAmount)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm font-bold text-accent-700">
+                      {formatCurrencyVND(order.depositRequired)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5">
+                      <span
+                        className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[11px] font-bold ${getStatusColor(order.status)}`}
+                      >
                         {getStatusLabel(order.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-ink-600">
                       {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <Link
-                        href={`/admin/don-hang/${order.id}`}
-                        className="inline-flex items-center space-x-1 px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>Xem chi tiết</span>
-                      </Link>
+                    <td className="px-4 py-3.5">
+                      <div className="flex justify-end">
+                        <Link
+                          href={`/admin/don-hang/${order.id}`}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-ink-200 px-2.5 py-1.5 text-[12px] font-bold text-ink-700 transition-colors hover:border-ink-300 hover:bg-ink-50"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>Xem chi tiết</span>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

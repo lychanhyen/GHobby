@@ -7,7 +7,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  
+
   const [settings, setSettings] = useState({
     bank_config: {
       bankId: "MB",
@@ -60,7 +60,7 @@ export default function SettingsPage() {
   const handleSave = async (key: string, value: any) => {
     setSaving(true);
     setMessage({ type: "", text: "" });
-    
+
     try {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
@@ -83,22 +83,29 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Đang tải...</div>;
+    return <div className="px-5 py-12 text-center text-sm text-ink-500">Đang tải...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900">Cấu Hình Cửa Hàng</h1>
-        <p className="text-slate-600 mt-1">Quản lý thông tin cửa hàng, thanh toán và vận chuyển</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Cấu hình</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+            Cấu Hình Cửa Hàng
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">
+            Quản lý thông tin cửa hàng, thanh toán và vận chuyển
+          </p>
+        </div>
       </div>
 
       {message.text && (
         <div
-          className={`p-4 rounded-lg ${
+          className={`rounded-md border px-4 py-3 text-sm font-medium ${
             message.type === "success"
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-red-50 text-red-700 border border-red-200"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-accent-200 bg-accent-50 text-accent-700"
           }`}
         >
           {message.text}
@@ -106,161 +113,176 @@ export default function SettingsPage() {
       )}
 
       {/* General Config */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="p-6 border-b border-slate-200 flex items-center space-x-2">
-          <Store className="w-5 h-5 text-red-600" />
-          <h2 className="text-lg font-bold text-slate-900">Thông tin chung</h2>
+      <div className="card">
+        <div className="flex items-center gap-2 border-b border-ink-200 px-5 py-4">
+          <Store className="h-4 w-4 text-accent-600" strokeWidth={1.8} />
+          <h2 className="text-sm font-bold text-ink-900">Thông tin chung</h2>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4 p-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Tên cửa hàng</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Tên cửa hàng</label>
               <input
                 type="text"
                 value={settings.general_config.shopName}
                 onChange={(e) => setSettings({ ...settings, general_config: { ...settings.general_config, shopName: e.target.value } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Hotline</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Hotline</label>
               <input
                 type="text"
                 value={settings.general_config.shopHotline}
                 onChange={(e) => setSettings({ ...settings, general_config: { ...settings.general_config, shopHotline: e.target.value } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Email</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Email</label>
               <input
                 type="email"
                 value={settings.general_config.shopEmail}
                 onChange={(e) => setSettings({ ...settings, general_config: { ...settings.general_config, shopEmail: e.target.value } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Địa chỉ</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Địa chỉ</label>
               <input
                 type="text"
                 value={settings.general_config.shopAddress}
                 onChange={(e) => setSettings({ ...settings, general_config: { ...settings.general_config, shopAddress: e.target.value } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Tỷ lệ cọc (%)</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Tỷ lệ cọc (%)</label>
               <input
                 type="number"
                 value={settings.general_config.depositPercentage}
                 onChange={(e) => setSettings({ ...settings, general_config: { ...settings.general_config, depositPercentage: parseInt(e.target.value) } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Thời gian tự hủy đơn (giờ)</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
+                Thời gian tự hủy đơn (giờ)
+              </label>
               <input
                 type="number"
                 value={settings.general_config.autoCancelHours}
                 onChange={(e) => setSettings({ ...settings, general_config: { ...settings.general_config, autoCancelHours: parseInt(e.target.value) } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
           </div>
           <button
             onClick={() => handleSave("general_config", settings.general_config)}
             disabled={saving}
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50"
+            className="btn-primary"
           >
-            <Save className="w-4 h-4" />
+            <Save className="h-4 w-4" />
             <span>Lưu cấu hình chung</span>
           </button>
         </div>
       </div>
 
       {/* Bank Config */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="p-6 border-b border-slate-200 flex items-center space-x-2">
-          <CreditCard className="w-5 h-5 text-red-600" />
-          <h2 className="text-lg font-bold text-slate-900">Thông tin chuyển khoản VietQR</h2>
+      <div className="card">
+        <div className="flex items-center gap-2 border-b border-ink-200 px-5 py-4">
+          <CreditCard className="h-4 w-4 text-accent-600" strokeWidth={1.8} />
+          <h2 className="text-sm font-bold text-ink-900">Thông tin chuyển khoản VietQR</h2>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-4 p-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Ngân hàng</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Ngân hàng</label>
               <input
                 type="text"
                 value={settings.bank_config.bankId}
                 onChange={(e) => setSettings({ ...settings, bank_config: { ...settings.bank_config, bankId: e.target.value } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
                 placeholder="VD: MB"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Số tài khoản</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Số tài khoản</label>
               <input
                 type="text"
                 value={settings.bank_config.bankAccount}
                 onChange={(e) => setSettings({ ...settings, bank_config: { ...settings.bank_config, bankAccount: e.target.value } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Tên chủ tài khoản</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Tên chủ tài khoản</label>
               <input
                 type="text"
                 value={settings.bank_config.bankAccountName}
                 onChange={(e) => setSettings({ ...settings, bank_config: { ...settings.bank_config, bankAccountName: e.target.value } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
           </div>
           <button
             onClick={() => handleSave("bank_config", settings.bank_config)}
             disabled={saving}
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50"
+            className="btn-primary"
           >
-            <Save className="w-4 h-4" />
+            <Save className="h-4 w-4" />
             <span>Lưu thông tin ngân hàng</span>
           </button>
         </div>
       </div>
 
       {/* Shipping Config */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="p-6 border-b border-slate-200 flex items-center space-x-2">
-          <Truck className="w-5 h-5 text-red-600" />
-          <h2 className="text-lg font-bold text-slate-900">Cấu hình vận chuyển</h2>
+      <div className="card">
+        <div className="flex items-center gap-2 border-b border-ink-200 px-5 py-4">
+          <Truck className="h-4 w-4 text-accent-600" strokeWidth={1.8} />
+          <h2 className="text-sm font-bold text-ink-900">Cấu hình vận chuyển</h2>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4 p-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Phí ship ngoại thành (VNĐ)</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
+                Phí giao hàng tiêu chuẩn toàn quốc (VNĐ)
+              </label>
               <input
                 type="number"
+                min={0}
+                step={1000}
                 value={settings.shipping_config.outerCityShippingFee}
                 onChange={(e) => setSettings({ ...settings, shipping_config: { ...settings.shipping_config, outerCityShippingFee: parseInt(e.target.value) } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Quận/Huyện nội thành (phân cách bởi dấu phẩy)</label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
+                Bán kính giao hỏa tốc miễn phí (km)
+              </label>
               <input
-                type="text"
-                value={settings.shipping_config.innerCityDistricts}
-                onChange={(e) => setSettings({ ...settings, shipping_config: { ...settings.shipping_config, innerCityDistricts: e.target.value } })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="Hải Châu,Thanh Khê,Sơn Trà"
+                type="number"
+                min={1}
+                max={50}
+                step={1}
+                value={settings.shipping_config.expressRadiusKm ?? 3}
+                onChange={(e) => setSettings({ ...settings, shipping_config: { ...settings.shipping_config, expressRadiusKm: parseInt(e.target.value) || 3 } })}
+                className="input"
               />
             </div>
           </div>
+          <p className="rounded-md border border-ink-200 bg-ink-50 px-3.5 py-3 text-[12px] leading-relaxed text-ink-600">
+            Hỏa tốc trong bán kính {settings.shipping_config.expressRadiusKm ?? 3}km được miễn phí.
+            Địa chỉ ngoài bán kính này khách liên hệ Zalo để shop báo phí trước khi giao; hệ thống
+            không tự thu phí hỏa tốc.
+          </p>
           <button
             onClick={() => handleSave("shipping_config", { ...settings.shipping_config, innerCityDistricts: settings.shipping_config.innerCityDistricts.split(",").map((d: string) => d.trim()).filter(Boolean) })}
             disabled={saving}
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50"
+            className="btn-primary"
           >
-            <Save className="w-4 h-4" />
+            <Save className="h-4 w-4" />
             <span>Lưu cấu hình vận chuyển</span>
           </button>
         </div>

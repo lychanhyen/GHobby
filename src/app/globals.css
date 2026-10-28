@@ -2,18 +2,163 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Work Sans";
+  src: url("/fonts/WorkSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("/fonts/WorkSans-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("/fonts/WorkSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-rgb: 248, 250, 252;
+  --paper: #f4f2ed;
+  --ink: #171613;
+  --accent: #c8102e;
+  --line: #e0ddd4;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: "Work Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: #c8102e;
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid #c8102e;
+    outline-offset: 2px;
+  }
+
+  img {
+    content-visibility: auto;
+  }
 }
 
-/* Ensure smooth image transition */
-img {
-  content-visibility: auto;
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-[1240px] px-4 sm:px-6 lg:px-8;
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em] text-ink-500;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md text-sm font-bold transition-colors duration-200 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent-600 px-4 py-2.5 text-white hover:bg-accent-700 active:bg-accent-800;
+  }
+
+  .btn-dark {
+    @apply btn bg-ink-900 px-4 py-2.5 text-white hover:bg-ink-800 active:bg-ink-950;
+  }
+
+  .btn-outline {
+    @apply btn border border-ink-300 bg-transparent px-4 py-2.5 text-ink-900 hover:border-ink-900 hover:bg-white;
+  }
+
+  .btn-ghost {
+    @apply btn px-3 py-2 text-ink-600 hover:bg-ink-100 hover:text-ink-900;
+  }
+
+  .input {
+    @apply w-full rounded-md border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900 placeholder:text-ink-400 transition-colors duration-200 focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/10;
+  }
+
+  .card {
+    @apply rounded-lg border border-ink-200 bg-white;
+  }
+
+  .link-quiet {
+    @apply text-ink-600 underline-offset-4 transition-colors duration-200 hover:text-ink-900 hover:underline;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-ink-100;
+  }
+
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.55) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 1.6s infinite;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton::after {
+    display: none;
+  }
 }

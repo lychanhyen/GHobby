@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock } from "lucide-react";
+import { CheckCircle2, Lock } from "lucide-react";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -61,94 +61,99 @@ export default function ChangePasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 px-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+      <div className="mx-auto max-w-lg space-y-6">
+        <div>
+          <p className="eyebrow">Tài khoản</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+            Đổi mật khẩu
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">Cập nhật mật khẩu đăng nhập quản trị</p>
+        </div>
+
+        <div className="card p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600" strokeWidth={1.8} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Đổi mật khẩu thành công</h2>
-          <p className="text-slate-600">Đang chuyển hướng đến trang quản trị...</p>
+          <h2 className="text-lg font-bold text-ink-950">Đổi mật khẩu thành công</h2>
+          <p className="mt-1 text-sm text-ink-500">Đang chuyển hướng đến trang quản trị...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-white mb-2">Đổi mật khẩu bắt buộc</h1>
-          <p className="text-slate-400">Vui lòng đổi mật khẩu cho lần đăng nhập đầu tiên</p>
-        </div>
+    <div className="mx-auto max-w-lg space-y-6">
+      <div>
+        <p className="eyebrow">Tài khoản</p>
+        <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+          Đổi mật khẩu bắt buộc
+        </h1>
+        <p className="mt-1 text-sm text-ink-500">Vui lòng đổi mật khẩu cho lần đăng nhập đầu tiên</p>
+      </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                Mật khẩu hiện tại
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="password"
-                  value={formData.currentPassword}
-                  onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  required
-                />
-              </div>
+      <div className="card p-5 sm:p-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div className="rounded-md border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700">
+              {error}
             </div>
+          )}
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                Mật khẩu mới
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="password"
-                  value={formData.newPassword}
-                  onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Ít nhất 8 ký tự"
-                  required
-                />
-              </div>
+          <div>
+            <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
+              Mật khẩu hiện tại
+            </label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+              <input
+                type="password"
+                value={formData.currentPassword}
+                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                className="input pl-10"
+                required
+              />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                Xác nhận mật khẩu mới
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  required
-                />
-              </div>
+          <div>
+            <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Mật khẩu mới</label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+              <input
+                type="password"
+                value={formData.newPassword}
+                onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                className="input pl-10"
+                placeholder="Ít nhất 8 ký tự"
+                required
+              />
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
-            </button>
-          </form>
-        </div>
+          <div>
+            <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
+              Xác nhận mật khẩu mới
+            </label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+              <input
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                className="input pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full"
+          >
+            {loading ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
+          </button>
+        </form>
       </div>
     </div>
   );

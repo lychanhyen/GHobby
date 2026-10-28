@@ -55,13 +55,13 @@ export default function ProductPurchaseActions({ product }: ProductPurchaseActio
 
   if (isUnavailable) {
     return (
-      <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-center">
-        <p className="text-sm font-semibold text-slate-700">
+      <div className="rounded-lg border border-ink-200 bg-ink-50 p-4">
+        <p className="text-sm font-bold text-ink-800">
           {isPreOrder
             ? "Mẫu mô hình này hiện đã hết suất pre-order."
             : "Mẫu mô hình này hiện tạm thời hết hàng."}
         </p>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="mt-1 text-xs leading-relaxed text-ink-500">
           Bạn vui lòng tham khảo các mẫu kit tương tự được gợi ý ngay bên dưới!
         </p>
       </div>
@@ -71,55 +71,57 @@ export default function ProductPurchaseActions({ product }: ProductPurchaseActio
   return (
     <div className="space-y-4">
       {hasDifferentType && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-relaxed text-amber-800">
           Giỏ hàng đang có sản phẩm khác loại (có sẵn / pre-order). Vui lòng tách thành 2 đơn
           riêng biệt trước khi thêm sản phẩm này.
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-bold text-slate-700">Số lượng:</span>
-        <div className="inline-flex items-center rounded-lg border border-slate-300 overflow-hidden">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="text-[13px] font-bold text-ink-800">Số lượng</span>
+        <div className="inline-flex h-10 items-center overflow-hidden rounded-md border border-ink-200 bg-white">
           <button
             type="button"
             onClick={() => changeQuantity(-1)}
             disabled={quantity <= 1}
             aria-label="Giảm số lượng"
-            className="p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex h-10 w-10 items-center justify-center text-ink-600 transition-colors duration-200 hover:bg-ink-50 hover:text-ink-950 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <Minus className="w-4 h-4" />
+            <Minus className="h-4 w-4" />
           </button>
-          <span className="w-12 text-center font-bold text-slate-900">{quantity}</span>
+          <span className="w-10 text-center text-sm font-bold tabular-nums text-ink-950">
+            {quantity}
+          </span>
           <button
             type="button"
             onClick={() => changeQuantity(1)}
             disabled={quantity >= maxQuantity}
             aria-label="Tăng số lượng"
-            className="p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex h-10 w-10 items-center justify-center text-ink-600 transition-colors duration-200 hover:bg-ink-50 hover:text-ink-950 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
           </button>
         </div>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs leading-relaxed text-ink-500">
           Tối đa {maxQuantity} sản phẩm {isPreOrder ? "(suất pre-order còn lại)" : "(tồn kho hiện tại)"}
         </span>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-2.5 sm:flex-row">
         <button
           type="button"
           onClick={() => handlePurchase(false)}
           disabled={!isHydrated}
-          className="flex-1 py-3.5 px-6 rounded-xl font-bold text-sm text-center border-2 border-red-600 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+          className="btn-outline h-11 flex-1 gap-2 px-5"
         >
-          <ShoppingCart className="w-4 h-4" />
+          <ShoppingCart className="h-4 w-4" />
           <span>Thêm vào giỏ hàng</span>
         </button>
         <button
           type="button"
           onClick={() => handlePurchase(true)}
           disabled={!isHydrated}
-          className="flex-1 py-3.5 px-6 rounded-xl font-bold text-sm text-center bg-red-600 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-red-900/30"
+          className="btn-primary h-11 flex-1 px-5"
         >
           {isPreOrder ? "Đặt Cọc Pre-Order Ngay (10%)" : "Mua Ngay (Cọc 10%)"}
         </button>
@@ -130,7 +132,7 @@ export default function ProductPurchaseActions({ product }: ProductPurchaseActio
           role="status"
           aria-live="polite"
           className={`text-sm font-medium ${
-            feedback.type === "success" ? "text-emerald-700" : "text-red-600"
+            feedback.type === "success" ? "text-emerald-700" : "text-accent-700"
           }`}
         >
           {feedback.text}

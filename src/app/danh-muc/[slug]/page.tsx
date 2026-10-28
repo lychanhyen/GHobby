@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import Breadcrumb from "@/components/Breadcrumb";
 import { getCategories, getCategoryBySlug, getProducts } from "@/lib/products";
@@ -78,7 +79,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const breadcrumbSchema = getBreadcrumbSchema(breadcrumbItems);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container-page py-6 sm:py-8">
       {/* Breadcrumb Schema JSON-LD */}
       <script
         type="application/ld+json"
@@ -89,25 +90,26 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Header & H1 */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 mb-8 shadow-sm">
-        <span className="text-xs font-bold text-red-600 uppercase tracking-wider block mb-2">
-          DANH MỤC GUNPLA BANDAI
-        </span>
+      <div className="mb-7 border-b border-ink-200 pb-6">
+        <p className="eyebrow">DANH MỤC GUNPLA BANDAI</p>
         {/* EXACTLY ONE H1 */}
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-3">
+        <h1 className="mt-2 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
           Mô Hình {category.name}
         </h1>
         {category.description && (
-          <p className="text-slate-600 text-sm max-w-3xl leading-relaxed">
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink-500">
             {category.description}
           </p>
         )}
+        <p className="mt-3 text-xs font-medium text-ink-400">
+          {totalItems} sản phẩm
+        </p>
       </div>
 
       {/* Products Grid */}
       {displayedProducts.length > 0 ? (
         <div className="space-y-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
             {displayedProducts.map((product, idx) => (
               <ProductCard key={product.id} product={product} priority={idx < 2} />
             ))}
@@ -115,17 +117,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
           {/* Real Pagination Links for SEO */}
           {totalPages > 1 && (
-            <nav aria-label="Phân trang danh mục" className="flex items-center justify-center space-x-2 pt-6">
+            <nav aria-label="Phân trang danh mục" className="flex flex-wrap items-center justify-center gap-2 pt-2">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
                 const isActive = p === currentPage;
                 return (
                   <Link
                     key={p}
                     href={`/danh-muc/${category.slug}?page=${p}${brand ? `&brand=${brand}` : ""}`}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    aria-current={isActive ? "page" : undefined}
+                    className={`inline-flex h-10 min-w-10 items-center justify-center rounded-md border px-3 text-sm font-bold transition-colors duration-200 ${
                       isActive
-                        ? "bg-red-600 text-white shadow-sm"
-                        : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+                        ? "border-ink-950 bg-ink-950 text-white"
+                        : "border-ink-200 bg-white text-ink-700 hover:border-ink-900 hover:text-ink-950"
                     }`}
                   >
                     {p}
@@ -136,15 +139,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           )}
         </div>
       ) : (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8">
-          <p className="text-slate-500 text-base mb-4">
+        <div className="rounded-lg border border-dashed border-ink-300 bg-white px-6 py-14 text-center">
+          <p className="mx-auto max-w-md text-sm leading-relaxed text-ink-500">
             Hiện chưa có mẫu mô hình nào trong danh mục này hoặc đang được cập nhật thêm hàng mới.
           </p>
-          <Link
-            href="/"
-            className="inline-block px-5 py-2.5 rounded-lg bg-slate-900 text-white font-semibold text-sm hover:bg-red-600 transition-colors"
-          >
-            ← Quay Lại Trang Chủ
+          <Link href="/" className="btn-dark mt-5 px-5">
+            <ArrowLeft className="h-4 w-4" />
+            Quay Lại Trang Chủ
           </Link>
         </div>
       )}

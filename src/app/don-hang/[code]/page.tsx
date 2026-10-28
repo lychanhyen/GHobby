@@ -86,110 +86,151 @@ export default async function OrderDetailPage({
   const orderTotal = order.totalProductAmount + order.shippingFee;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-6">
-        <Link
-          href="/profile/don-hang"
-          className="inline-flex items-center space-x-1.5 text-sm font-bold text-slate-600 hover:text-red-600 transition-colors mb-3"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Đơn hàng của tôi</span>
-        </Link>
-        <h1 className="text-2xl font-black text-slate-900 mb-2">Chi tiết đơn hàng</h1>
-        <p className="text-slate-600">
-          Mã đơn hàng: <span className="font-bold text-red-600">{order.orderCode}</span>
-        </p>
-      </div>
-
-      <div className="space-y-6">
-        {/* Status */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-slate-900">Trạng thái đơn hàng</h2>
-            <span className={`px-3 py-1 rounded-full border text-sm font-bold ${statusMeta.badgeClass}`}>
-              {getOrderStatusLabel(order.status)}
-            </span>
-          </div>
-          <p className="text-sm text-slate-600">
-            Ngày đặt: {new Date(order.createdAt).toLocaleString("vi-VN")}
+    <div className="container-page py-8">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-6">
+          <Link
+            href="/profile/don-hang"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-500 transition-colors duration-200 hover:text-ink-950"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Đơn hàng của tôi</span>
+          </Link>
+          <p className="eyebrow mt-4">Đơn hàng</p>
+          <h1 className="mt-1.5 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+            Chi tiết đơn hàng
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">
+            Mã đơn hàng:{" "}
+            <span className="font-mono font-bold text-ink-950">{order.orderCode}</span>
           </p>
         </div>
 
-        {/* Payment Section */}
-        {(order.status === "PENDING_DEPOSIT" || order.status === "PREORDER_PENDING" || order.status === "PAYMENT_SUBMITTED") && (
-          <OrderPaymentSection order={order} settings={settings} token={token} />
-        )}
-
-        {/* Order Items */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Sản phẩm</h2>
-          <div className="space-y-4">
-            {order.items.map((item: any) => (
-              <div key={item.id} className="flex space-x-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
-                <img
-                  src={item.product.imageUrl}
-                  alt={item.productName}
-                  className="w-20 h-20 object-cover rounded-lg"
-                />
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-900">{item.productName}</h3>
-                  <p className="text-sm text-slate-500">Số lượng: {item.quantity}</p>
-                  <p className="text-sm text-slate-900 mt-1">{formatCurrencyVND(item.priceAtOrder * item.quantity)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Customer Info */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Thông tin nhận hàng</h2>
-          <div className="space-y-2 text-sm">
-            <p className="flex items-center gap-2">
-              <span className="font-bold">Phương thức:</span>
-              {isStorePickup ? (
-                <Store className="w-4 h-4 text-red-600" />
-              ) : (
-                <Truck className="w-4 h-4 text-red-600" />
-              )}
-              <span>{getShippingMethodLabel(order.shippingMethod)}</span>
+        <div className="space-y-5">
+          {/* Status */}
+          <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-base font-bold text-ink-950">Trạng thái đơn hàng</h2>
+              <span
+                className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[11px] font-bold ${statusMeta.badgeClass}`}
+              >
+                {getOrderStatusLabel(order.status)}
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-ink-500">
+              Ngày đặt: {new Date(order.createdAt).toLocaleString("vi-VN")}
             </p>
-            <p><span className="font-bold">Họ tên:</span> {order.customerName}</p>
-            <p><span className="font-bold">Số điện thoại:</span> {order.customerPhone}</p>
-            {isStorePickup ? (
-              <p className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 mt-0.5 text-red-600 flex-shrink-0" />
-                <span><span className="font-bold">Nhận tại:</span> {settings.shopAddress}</span>
-              </p>
-            ) : (
-              <>
-                <p><span className="font-bold">Địa chỉ:</span> {order.customerAddress}</p>
-                <p><span className="font-bold">Tỉnh/Thành phố:</span> {order.provinceCity}</p>
-              </>
-            )}
-            {order.note && <p><span className="font-bold">Ghi chú:</span> {order.note}</p>}
           </div>
-        </div>
 
-        {/* Order Summary */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Tóm tắt thanh toán</h2>
-          <div className="space-y-2">
-            <div className="flex justify-between text-slate-600">
-              <span>Tổng tiền hàng</span>
-              <span>{formatCurrencyVND(order.totalProductAmount)}</span>
+          {/* Payment Section */}
+          {(order.status === "PENDING_DEPOSIT" || order.status === "PREORDER_PENDING" || order.status === "PAYMENT_SUBMITTED") && (
+            <OrderPaymentSection order={order} settings={settings} token={token} />
+          )}
+
+          {/* Order Items */}
+          <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
+            <h2 className="text-base font-bold text-ink-950">Sản phẩm</h2>
+            <div className="mt-4 space-y-4">
+              {order.items.map((item: any) => (
+                <div
+                  key={item.id}
+                  className="flex gap-3.5 border-b border-ink-100 pb-4 last:border-0 last:pb-0"
+                >
+                  <img
+                    src={item.product.imageUrl}
+                    alt={item.productName}
+                    className="h-20 w-20 shrink-0 rounded-md border border-ink-100 bg-ink-50 object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-bold leading-snug text-ink-950">{item.productName}</h3>
+                    <p className="mt-1 text-xs text-ink-500">Số lượng: {item.quantity}</p>
+                    <p className="mt-1 text-sm font-bold text-ink-900">
+                      {formatCurrencyVND(item.priceAtOrder * item.quantity)}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between text-slate-600">
-              <span>Phí vận chuyển</span>
-              <span>{order.shippingFee === 0 ? "Miễn phí" : formatCurrencyVND(order.shippingFee)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-slate-200">
-              <span>Tổng giá trị đơn hàng</span>
-              <span>{formatCurrencyVND(orderTotal)}</span>
-            </div>
-            <div className="flex justify-between text-red-600 font-bold">
-              <span>Tiền cọc cần thanh toán (10%)</span>
-              <span>{formatCurrencyVND(order.depositRequired)}</span>
+          </div>
+
+          {/* Customer Info */}
+          <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
+            <h2 className="text-base font-bold text-ink-950">Thông tin nhận hàng</h2>
+            <dl className="mt-4 divide-y divide-ink-100 rounded-md border border-ink-200 text-sm">
+              <div className="flex items-start justify-between gap-4 px-4 py-3">
+                <dt className="shrink-0 text-ink-500">Phương thức</dt>
+                <dd className="flex items-center gap-1.5 text-right font-medium text-ink-900">
+                  {isStorePickup ? (
+                    <Store className="h-4 w-4 shrink-0 text-ink-500" />
+                  ) : (
+                    <Truck className="h-4 w-4 shrink-0 text-ink-500" />
+                  )}
+                  <span>{getShippingMethodLabel(order.shippingMethod)}</span>
+                </dd>
+              </div>
+              <div className="flex items-start justify-between gap-4 px-4 py-3">
+                <dt className="shrink-0 text-ink-500">Họ tên</dt>
+                <dd className="text-right font-medium text-ink-900">{order.customerName}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4 px-4 py-3">
+                <dt className="shrink-0 text-ink-500">Số điện thoại</dt>
+                <dd className="text-right font-medium text-ink-900">{order.customerPhone}</dd>
+              </div>
+              {isStorePickup ? (
+                <div className="flex items-start justify-between gap-4 px-4 py-3">
+                  <dt className="shrink-0 text-ink-500">Nhận tại</dt>
+                  <dd className="flex items-start justify-end gap-1.5 text-right font-medium text-ink-900">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" />
+                    <span>{settings.shopAddress}</span>
+                  </dd>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between gap-4 px-4 py-3">
+                    <dt className="shrink-0 text-ink-500">Địa chỉ</dt>
+                    <dd className="text-right font-medium text-ink-900">{order.customerAddress}</dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-4 px-4 py-3">
+                    <dt className="shrink-0 text-ink-500">Tỉnh/Thành phố</dt>
+                    <dd className="text-right font-medium text-ink-900">{order.provinceCity}</dd>
+                  </div>
+                </>
+              )}
+              {order.note && (
+                <div className="flex items-start justify-between gap-4 px-4 py-3">
+                  <dt className="shrink-0 text-ink-500">Ghi chú</dt>
+                  <dd className="text-right font-medium text-ink-900">{order.note}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+
+          {/* Order Summary */}
+          <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
+            <h2 className="text-base font-bold text-ink-950">Tóm tắt thanh toán</h2>
+            <div className="mt-4 space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3 text-ink-600">
+                <span>Tổng tiền hàng</span>
+                <span className="font-medium text-ink-900">
+                  {formatCurrencyVND(order.totalProductAmount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-ink-600">
+                <span>Phí vận chuyển</span>
+                <span className="font-medium text-ink-900">
+                  {order.shippingFee === 0 ? "Miễn phí" : formatCurrencyVND(order.shippingFee)}
+                </span>
+              </div>
+              <div className="flex items-end justify-between gap-3 border-t border-ink-200 pt-2.5">
+                <span className="font-bold text-ink-900">Tổng giá trị đơn hàng</span>
+                <span className="text-lg font-bold tracking-tight text-ink-950">
+                  {formatCurrencyVND(orderTotal)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3 font-bold text-amber-700">
+                <span>Tiền cọc cần thanh toán (10%)</span>
+                <span>{formatCurrencyVND(order.depositRequired)}</span>
+              </div>
             </div>
           </div>
         </div>

@@ -63,18 +63,22 @@ export default function UsersPage() {
   const getRoleBadge = (role: string) => {
     if (role === "ADMIN") {
       return (
-        <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
-          <ShieldCheck className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 rounded-sm border border-accent-200 bg-accent-50 px-2 py-0.5 text-[11px] font-bold text-accent-700">
+          <ShieldCheck className="h-3 w-3" />
           <span>ADMIN</span>
         </span>
       );
     }
     if (role === "STAFF") {
-      return <span className="px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">STAFF</span>;
+      return (
+        <span className="inline-flex items-center rounded-sm border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+          STAFF
+        </span>
+      );
     }
     return (
-      <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
-        <UserIcon className="w-3 h-3" />
+      <span className="inline-flex items-center gap-1 rounded-sm border border-ink-200 bg-ink-50 px-2 py-0.5 text-[11px] font-bold text-ink-600">
+        <UserIcon className="h-3 w-3" />
         <span>USER</span>
       </span>
     );
@@ -82,70 +86,75 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Quản Lý Người Dùng</h1>
-          <p className="text-slate-600 mt-1">Danh sách tài khoản quản trị và khách hàng</p>
+          <p className="eyebrow">Người dùng</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+            Quản Lý Người Dùng
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">Danh sách tài khoản quản trị và khách hàng</p>
         </div>
-        <div className="flex items-center space-x-2 text-slate-600">
-          <Users className="w-5 h-5" />
-          <span className="font-bold">{users.length} tài khoản</span>
+        <div className="inline-flex items-center gap-2 rounded-md border border-ink-200 bg-white px-3 py-2 text-[12px] font-bold text-ink-600">
+          <Users className="h-4 w-4" />
+          <span>{users.length} tài khoản</span>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+        <div className="rounded-md border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700">
+          {error}
+        </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-ink-200 bg-white">
         {loading ? (
-          <div className="text-center py-10 text-slate-500">Đang tải...</div>
+          <div className="px-5 py-12 text-center text-sm text-ink-500">Đang tải...</div>
         ) : users.length === 0 ? (
-          <div className="text-center py-10 text-slate-500">Chưa có người dùng nào</div>
+          <div className="px-5 py-12 text-center text-sm text-ink-500">Chưa có người dùng nào</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+            <table className="w-full min-w-[940px]">
+              <thead className="border-b border-ink-200 bg-ink-50 text-[11px] font-bold uppercase tracking-wide text-ink-500">
                 <tr>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Họ tên</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Tên đăng nhập</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Liên hệ</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Vai trò</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Trạng thái</th>
-                  <th className="text-left text-xs font-bold text-slate-600 uppercase px-6 py-3">Ngày tạo</th>
-                  <th className="text-right text-xs font-bold text-slate-600 uppercase px-6 py-3">Thao tác</th>
+                  <th className="px-4 py-3 text-left">Họ tên</th>
+                  <th className="px-4 py-3 text-left">Tên đăng nhập</th>
+                  <th className="px-4 py-3 text-left">Liên hệ</th>
+                  <th className="px-4 py-3 text-left">Vai trò</th>
+                  <th className="px-4 py-3 text-left">Trạng thái</th>
+                  <th className="px-4 py-3 text-left">Ngày tạo</th>
+                  <th className="px-4 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-ink-100">
                 {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">{user.fullName}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600 font-mono">{user.username}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                  <tr key={user.id} className="hover:bg-ink-50/70">
+                    <td className="px-4 py-3.5 text-sm font-bold text-ink-900">{user.fullName}</td>
+                    <td className="px-4 py-3.5 font-mono text-[13px] text-ink-600">{user.username}</td>
+                    <td className="px-4 py-3.5 text-sm text-ink-600">
                       <p>{user.phone || "Chưa có SĐT"}</p>
-                      {user.city && <p className="text-xs text-slate-400">{user.city}</p>}
+                      {user.city && <p className="text-[12px] text-ink-400">{user.city}</p>}
                     </td>
-                    <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
-                    <td className="px-6 py-4">
+                    <td className="whitespace-nowrap px-4 py-3.5">{getRoleBadge(user.role)}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5">
                       {user.isActive ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                        <span className="inline-flex items-center rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
                           Đang hoạt động
                         </span>
                       ) : (
-                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
+                        <span className="inline-flex items-center rounded-sm border border-ink-200 bg-ink-100 px-2 py-0.5 text-[11px] font-bold text-ink-600">
                           Đã khoá
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-ink-600">
                       {new Date(user.createdAt).toLocaleDateString("vi-VN")}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-end gap-2">
                         <select
                           value={user.role}
                           onChange={(e) => updateUser(user.id, { role: e.target.value })}
-                          className="px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                          className="rounded-md border border-ink-200 bg-white px-2 py-1.5 text-[12px] font-bold text-ink-700 transition-colors focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/10"
                         >
                           <option value="USER">USER</option>
                           <option value="STAFF">STAFF</option>
@@ -153,14 +162,14 @@ export default function UsersPage() {
                         </select>
                         <button
                           onClick={() => updateUser(user.id, { isActive: !user.isActive })}
-                          className={`p-2 rounded-lg transition-colors ${
+                          className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
                             user.isActive
-                              ? "text-slate-600 hover:bg-slate-100"
-                              : "text-green-600 hover:bg-green-50"
+                              ? "text-ink-500 hover:bg-ink-100 hover:text-ink-900"
+                              : "text-emerald-700 hover:bg-emerald-50"
                           }`}
                           title={user.isActive ? "Khoá tài khoản" : "Mở khoá tài khoản"}
                         >
-                          {user.isActive ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                          {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                         </button>
                       </div>
                     </td>

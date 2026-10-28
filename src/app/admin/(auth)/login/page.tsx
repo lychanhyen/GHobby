@@ -75,39 +75,43 @@ export default function AdminLoginPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-red-950">
-        <div className="text-slate-400">Đang tải...</div>
+      <div className="flex min-h-screen items-center justify-center bg-paper px-4">
+        <div className="text-sm text-ink-500">Đang tải...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-white mb-2">GHobby Admin</h1>
-          <p className="text-slate-400">Đăng nhập vào khu vực quản trị</p>
+    <div className="flex min-h-screen items-center justify-center bg-paper px-4 py-10">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-md bg-ink-950 text-sm font-bold text-white">
+            GH
+          </span>
+          <p className="eyebrow mt-4">Quản trị</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950">GHobby Admin</h1>
+          <p className="mt-1 text-sm text-ink-500">Đăng nhập vào khu vực quản trị</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="rounded-lg border border-ink-200 bg-white p-6 shadow-card">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              <div className="rounded-md border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
                 Tên đăng nhập
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
                 <input
                   type="text"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="input pl-10"
                   placeholder="Nhập tên đăng nhập"
                   required
                 />
@@ -115,16 +119,14 @@ export default function AdminLoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                Mật khẩu
-              </label>
+              <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Mật khẩu</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="input pl-10"
                   placeholder="Nhập mật khẩu"
                   required
                 />
@@ -134,12 +136,16 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-red-600 text-white font-bold hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn-primary w-full"
             >
               {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
           </form>
         </div>
+
+        <p className="mt-4 text-center text-[11px] uppercase tracking-wide text-ink-400">
+          GHobby · Quản trị nội bộ
+        </p>
       </div>
     </div>
   );

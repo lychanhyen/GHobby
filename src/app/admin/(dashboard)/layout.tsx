@@ -33,11 +33,13 @@ export default async function AdminLayout({
   // }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-paper">
       <AdminSidebar />
       <div className="lg:pl-64">
         <AdminHeader user={sessionData.user} />
-        <main className="p-6">{children}</main>
+        <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          {children}
+        </main>
       </div>
     </div>
   );

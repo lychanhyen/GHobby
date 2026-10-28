@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 
 interface FooterProps {
   settings?: any;
@@ -10,93 +11,172 @@ export default function Footer({ settings, categories = [] }: FooterProps) {
     shopName: process.env.NEXT_PUBLIC_SHOP_NAME || "GHobby Model Kit Shop",
     shopAddress: process.env.NEXT_PUBLIC_SHOP_ADDRESS || "Việt Nam",
     shopHotline: process.env.NEXT_PUBLIC_SHOP_HOTLINE || "0905.123.456",
+    shopEmail: process.env.NEXT_PUBLIC_SHOP_EMAIL || "support@ghobby.vn",
     outerCityShippingFee: Number(process.env.NEXT_PUBLIC_OUTER_CITY_SHIPPING_FEE) || 20000,
   };
 
   return (
-    <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Col 1: Shop Intro */}
-          <div className="md:col-span-1">
-            <span className="text-xl font-extrabold tracking-tight text-white block mb-3">
-              GHOBBY<span className="text-red-500">.VN</span>
-            </span>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              Cửa hàng chuyên phân phối mô hình Gunpla Bandai chính hãng (HG, RG, MG, PG, SD), Figure anime cao cấp và phụ kiện mô hình uy tín, giao hàng toàn quốc.
+    <footer className="mt-20 border-t border-ink-200 bg-ink-950 text-ink-300">
+      <div className="container-page py-12 lg:py-16">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12">
+          {/* Brand */}
+          <div className="lg:col-span-4">
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded bg-white text-sm font-bold tracking-tight text-ink-950">
+                GH
+              </span>
+              <span className="text-[19px] font-bold tracking-tight text-white">
+                GHOBBY<span className="text-accent-500">.VN</span>
+              </span>
+            </Link>
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-400">
+              Cửa hàng mô hình Gunpla Bandai, figure anime và dụng cụ lắp ráp chính hãng.
+              Chọn hàng kỹ, đóng gói cẩn thận, giao đúng hẹn.
             </p>
-            <div className="text-xs text-slate-500 space-y-1">
-              <p>📍 Địa chỉ: {shopSettings.shopAddress}</p>
-              <p>📞 Hotline/Zalo: {shopSettings.shopHotline}</p>
-              <p>⏰ Mở cửa: 09:00 - 21:00 hàng ngày</p>
+
+            <div className="mt-5 space-y-2.5 text-sm">
+              <p className="flex items-start gap-2.5">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-ink-500" />
+                <span>{shopSettings.shopAddress}</span>
+              </p>
+              <p className="flex items-center gap-2.5">
+                <Phone className="h-4 w-4 shrink-0 text-ink-500" />
+                <a
+                  href={`https://zalo.me/${(shopSettings.shopHotline || "").replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-white"
+                >
+                  {shopSettings.shopHotline} (Zalo)
+                </a>
+              </p>
+              <p className="flex items-center gap-2.5">
+                <Mail className="h-4 w-4 shrink-0 text-ink-500" />
+                <a href={`mailto:${shopSettings.shopEmail}`} className="transition-colors hover:text-white">
+                  {shopSettings.shopEmail}
+                </a>
+              </p>
+              <p className="flex items-center gap-2.5">
+                <Clock className="h-4 w-4 shrink-0 text-ink-500" />
+                <span>09:00 – 21:00, hàng ngày</span>
+              </p>
             </div>
           </div>
 
-          {/* Col 2: Categories */}
-          <div>
-            <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
-              Dòng Sản Phẩm
+          {/* Categories */}
+          <div className="lg:col-span-3">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-500">
+              Dòng sản phẩm
             </h3>
-            <ul className="space-y-2 text-sm">
-              {(categories || []).slice(0, 12).map((cat: any) => (
+            <ul className="mt-4 space-y-2.5 text-sm">
+              {categories.slice(0, 7).map((cat: any) => (
                 <li key={cat.id}>
                   <Link
                     href={`/danh-muc/${cat.slug}`}
-                    className="hover:text-white transition-colors"
+                    prefetch={true}
+                    className="text-ink-300 transition-colors hover:text-white"
                   >
                     {cat.name}
                   </Link>
                 </li>
               ))}
-              {(categories || []).length === 0 && (
-                <li className="text-slate-600 text-xs">Đang cập nhật...</li>
+              {categories.length === 0 && (
+                <li className="text-xs text-ink-500">Đang cập nhật</li>
               )}
             </ul>
           </div>
 
-          {/* Col 3: Policy */}
-          <div>
-            <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
-              Chính Sách & Vận Chuyển
+          {/* Support */}
+          <div className="lg:col-span-2">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-500">
+              Hỗ trợ
             </h3>
-            <ul className="space-y-2 text-sm">
-              <li>🚚 Giao hàng: Ngoại thành {(shopSettings.outerCityShippingFee || 20000).toLocaleString("vi-VN")}đ | Nội thành thỏa thuận Zalo</li>
-              <li>🛡️ Cam kết: 100% hàng chính hãng Bandai Spirits (Nhật Bản)</li>
-              <li>📦 Đóng gói: Thùng carton 5 lớp, bọc bóng khí chống móp hộp kit</li>
-              <li>🔒 An toàn: Đặt cọc 10% chuyển khoản bảo vệ quyền lợi hai bên</li>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              <li>
+                <Link
+                  href="/tra-cuu-don-hang"
+                  prefetch={true}
+                  className="text-ink-300 transition-colors hover:text-white"
+                >
+                  Tra cứu đơn hàng
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/profile/don-hang"
+                  prefetch={true}
+                  className="text-ink-300 transition-colors hover:text-white"
+                >
+                  Đơn hàng của tôi
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/gio-hang"
+                  prefetch={true}
+                  className="text-ink-300 transition-colors hover:text-white"
+                >
+                  Giỏ hàng
+                </Link>
+              </li>
+              <li>
+                <a
+                  href={`https://zalo.me/${(shopSettings.shopHotline || "").replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink-300 transition-colors hover:text-white"
+                >
+                  Tư vấn qua Zalo
+                </a>
+              </li>
             </ul>
           </div>
 
-          {/* Col 4: Payment Methods (NO ACCOUNT NUMBER HERE!) */}
-          <div>
-            <h3 className="text-white text-sm font-semibold uppercase tracking-wider mb-4">
-              Hình Thức Thanh Toán
+          {/* Shipping & payment */}
+          <div className="lg:col-span-3">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-500">
+              Giao hàng &amp; thanh toán
             </h3>
-            <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl text-xs space-y-2">
-              <div className="flex items-center space-x-2 text-slate-200 font-medium">
-                <span className="text-base">💳</span>
-                <span>Quét mã VietQR (Hỗ trợ 40+ app ngân hàng)</span>
-              </div>
-              <div className="flex items-center space-x-2 text-slate-200 font-medium">
-                <span className="text-base">📦</span>
-                <span>Thanh toán COD số tiền còn lại khi nhận hàng</span>
-              </div>
-              <p className="text-amber-400 text-[11px] pt-1 border-t border-slate-800">
-                * Mã VietQR và thông tin tài khoản sẽ hiển thị ngay sau khi quý khách hoàn tất đặt đơn trên web.
-              </p>
+            <ul className="mt-4 space-y-2.5 text-sm text-ink-300">
+              <li className="flex justify-between gap-4">
+                <span>Toàn quốc</span>
+                <span className="font-bold text-white">
+                  {(shopSettings.outerCityShippingFee || 20000).toLocaleString("vi-VN")}đ
+                </span>
+              </li>
+              <li className="flex justify-between gap-4">
+                <span>Hỏa tốc &lt; 3km</span>
+                <span className="font-bold text-white">Miễn phí</span>
+              </li>
+              <li className="flex justify-between gap-4">
+                <span>Nhận tại cửa hàng</span>
+                <span className="font-bold text-white">Miễn phí</span>
+              </li>
+              <li className="flex justify-between gap-4 border-t border-ink-800 pt-2.5">
+                <span>Đặt cọc</span>
+                <span className="font-bold text-white">10%</span>
+              </li>
+            </ul>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="rounded border border-ink-700 px-2.5 py-1 text-[11px] font-bold text-ink-300">
+                VietQR
+              </span>
+              <span className="rounded border border-ink-700 px-2.5 py-1 text-[11px] font-bold text-ink-300">
+                COD
+              </span>
             </div>
+            <p className="mt-4 text-xs leading-relaxed text-ink-500">
+              Hỏa tốc trên 3km vui lòng nhắn Zalo để shop báo phí trước khi giao.
+            </p>
           </div>
         </div>
 
-        <div className="border-t border-slate-900 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} {shopSettings.shopName}. Tất cả các quyền được bảo lưu.</p>
-          <div className="mt-4 md:mt-0 space-x-4">
-            <span>Chuẩn SEO Google</span>
-            <span>•</span>
-            <span>Quản Lý Kho Chống Âm</span>
-            <span>•</span>
-            <span>Thanh Toán VietQR Napas247</span>
-          </div>
+        <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-ink-800 pt-6 text-xs text-ink-500 sm:flex-row sm:items-center">
+          <p>
+            © {new Date().getFullYear()} {shopSettings.shopName}. Tất cả các quyền được bảo lưu.
+          </p>
+          <p>Hàng chính hãng · Đổi trả trong 7 ngày · Bảo vệ người mua</p>
         </div>
       </div>
     </footer>

@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ArrowRight, Package, ShoppingCart, AlertTriangle } from "lucide-react";
+import {
+  ArrowRight,
+  AlertTriangle,
+  ClipboardList,
+  Package,
+  Plus,
+  Settings,
+  ShoppingCart,
+  Store,
+} from "lucide-react";
 
 export default async function AdminDashboard() {
   const sessionData = await getSession();
@@ -37,64 +46,161 @@ export default async function AdminDashboard() {
       title: "Sản phẩm",
       value: productCount,
       icon: Package,
-      color: "bg-blue-500",
       href: "/admin/san-pham",
+      hint: "Đang kinh doanh",
+      tone: "bg-ink-100 text-ink-600",
     },
     {
       title: "Đơn hàng",
       value: orderCount,
       icon: ShoppingCart,
-      color: "bg-green-500",
       href: "/admin/don-hang",
+      hint: "Tất cả đơn đã ghi nhận",
+      tone: "bg-ink-100 text-ink-600",
     },
     {
       title: "Chờ xử lý",
       value: pendingOrders,
-      icon: ShoppingCart,
-      color: "bg-yellow-500",
+      icon: ClipboardList,
       href: "/admin/don-hang",
+      hint: "Cần xác nhận hoặc xử lý",
+      tone: "bg-amber-50 text-amber-700",
     },
     {
       title: "Sắp hết hàng",
       value: lowStockCount,
       icon: AlertTriangle,
-      color: "bg-red-500",
       href: "/admin/kho",
+      hint: "Tồn kho từ 5 sản phẩm trở xuống",
+      tone: "bg-accent-50 text-accent-700",
     },
+  ];
+
+  const quickActions = [
+    { label: "Thêm sản phẩm", description: "Tạo sản phẩm mới", href: "/admin/san-pham/tao-moi", icon: Plus },
+    { label: "Bán tại cửa hàng", description: "Mở màn hình POS", href: "/admin/pos", icon: Store },
+    { label: "Xử lý đơn hàng", description: "Theo dõi đơn đang chờ", href: "/admin/don-hang", icon: ShoppingCart },
+    { label: "Cấu hình cửa hàng", description: "Thông tin và vận chuyển", href: "/admin/cau-hinh", icon: Settings },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-slate-900">Tổng Quan</h1>
-        <p className="text-slate-600 mt-1">Xin chào, {sessionData?.user.fullName}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Tổng quan</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-ink-950 sm:text-2xl">
+            Tổng Quan
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">Xin chào, {sessionData?.user.fullName}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/pos" className="btn-outline">
+            <Store className="h-4 w-4" />
+            Bán tại cửa hàng
+          </Link>
+          <Link href="/admin/san-pham/tao-moi" className="btn-primary">
+            <Plus className="h-4 w-4" />
+            Thêm sản phẩm
+          </Link>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Link
               key={stat.title}
               href={stat.href}
-              className="group bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:border-red-200 hover:shadow-md transition-all"
+              className="group card p-5 transition-colors hover:border-ink-400"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600 font-medium">{stat.title}</p>
-                  <p className="text-2xl font-black text-slate-900 mt-2">{stat.value}</p>
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-ink-500">
+                    {stat.title}
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-ink-950">{stat.value}</p>
                 </div>
-                <div className={`w-12 h-12 rounded-lg ${stat.color} flex items-center justify-center`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${stat.tone}`}>
+                  <Icon className="h-5 w-5" strokeWidth={1.8} />
+                </span>
               </div>
-              <p className="flex items-center space-x-1 text-xs font-bold text-slate-400 group-hover:text-red-600 transition-colors mt-4">
-                <span>Xem chi tiết</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+              <p className="mt-3 flex items-center gap-1 text-[12px] font-medium text-ink-400 transition-colors group-hover:text-ink-700">
+                {stat.hint}
+                <ArrowRight className="h-3.5 w-3.5" />
               </p>
             </Link>
           );
         })}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <section className="card lg:col-span-3">
+          <div className="border-b border-ink-200 px-5 py-4">
+            <h2 className="text-sm font-bold text-ink-900">Thao tác nhanh</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-px bg-ink-100 sm:grid-cols-2">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  className="group flex items-center gap-3 bg-white p-4 transition-colors hover:bg-ink-50"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ink-200 text-ink-600 transition-colors group-hover:border-ink-300 group-hover:text-ink-900">
+                    <Icon className="h-4 w-4" strokeWidth={1.8} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold text-ink-900">{action.label}</span>
+                    <span className="block truncate text-[12px] text-ink-500">{action.description}</span>
+                  </span>
+                  <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-ink-300 transition-colors group-hover:text-ink-600" />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="card lg:col-span-2">
+          <div className="border-b border-ink-200 px-5 py-4">
+            <h2 className="text-sm font-bold text-ink-900">Cần chú ý</h2>
+          </div>
+          <div className="divide-y divide-ink-100">
+            <Link
+              href="/admin/don-hang"
+              className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-ink-50"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-50 text-amber-700">
+                <ClipboardList className="h-4 w-4" strokeWidth={1.8} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-ink-900">{pendingOrders} đơn chờ xử lý</span>
+                <span className="block text-[12px] text-ink-500">Xác nhận cọc và cập nhật trạng thái</span>
+              </span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-ink-300" />
+            </Link>
+            <Link
+              href="/admin/kho"
+              className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-ink-50"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent-50 text-accent-700">
+                <AlertTriangle className="h-4 w-4" strokeWidth={1.8} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-ink-900">{lowStockCount} sản phẩm sắp hết</span>
+                <span className="block text-[12px] text-ink-500">Kiểm tra tồn kho và nhập thêm hàng</span>
+              </span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-ink-300" />
+            </Link>
+            <div className="px-5 py-4">
+              <p className="text-[12px] leading-relaxed text-ink-500">
+                Số liệu được cập nhật trực tiếp từ hệ thống bán hàng. Dùng menu bên trái để
+                chuyển nhanh giữa các khu vực quản trị.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { BASE_URL, generateOrganizationJsonLd } from "@/lib/seo";
 import { getStoreSettings } from "@/lib/settings";
 import { getCategories } from "@/lib/products";
 import ClientLayout from "@/components/ClientLayout";
+import TopLoadingBar from "@/components/TopLoadingBar";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -104,7 +105,8 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased">
+      <body className="flex min-h-screen flex-col bg-paper text-ink-950 antialiased">
+        <TopLoadingBar />
         <ClientLayout settings={settings} categories={categories}>
           {children}
         </ClientLayout>

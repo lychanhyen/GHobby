@@ -8,8 +8,11 @@ export function normalizeVi(s: string): string {
   return str;
 }
 
+export type ExpressType = "standard" | "under3km" | "over3km";
+
 export interface ShippingQuoteInput {
   shippingMethod: "DELIVERY" | "STORE_PICKUP";
+  expressType?: ExpressType;
   provinceCity?: string;
   customerAddress?: string;
   settings: StoreSettings;
@@ -26,6 +29,7 @@ export interface ShippingQuoteResult {
 
 export function getShippingQuote({
   shippingMethod,
+  expressType = "standard",
   provinceCity,
   customerAddress,
   settings,
@@ -39,32 +43,33 @@ export function getShippingQuote({
     };
   }
 
-  // For delivery - check if inner city (for express/free under radius logic handled by UI)
-  const innerDistricts = settings.innerCityDistricts || [];
-  if (innerDistricts.length === 0) {
+  // Hỏa tốc nội thành: miễn phí trong bán kính 3km.
+  if (expressType === "under3km") {
     return {
-      isInnerCity: false,
-      shippingArea: provinceCity || "Ngoại thành",
-      shippingFee: Number(settings.outerCityShippingFee) || 20000,
+      isInnerCity: true,
+      shippingArea: "Nội thành",
+      shippingFee: 0,
+      note: "Hỏa tốc dưới 3km - Miễn phí",
     };
   }
 
-  const combined = normalizeVi(`${provinceCity || ""} ${customerAddress || ""}`);
-  for (const district of innerDistricts) {
-    const nd = normalizeVi(district);
-    if (!nd) continue;
-    if (combined.includes(nd)) {
-      return {
-        isInnerCity: true,
-        shippingArea: "Nội thành",
-        shippingFee: Number(settings.outerCityShippingFee) || 20000,
-      };
-    }
+  // Trên 3km: không tự động thu phí, khách liên hệ Zalo để shop báo giá.
+  if (expressType === "over3km") {
+    return {
+      isInnerCity: false,
+      shippingArea: provinceCity || "Ngoại thành",
+      shippingFee: 0,
+      note: "Hỏa tốc trên 3km - Liên hệ Zalo để báo phí",
+      requiresQuote: true,
+      contactZalo: true,
+    };
   }
 
+  // Giao hàng tiêu chuẩn toàn quốc - đồng giá.
   return {
     isInnerCity: false,
-    shippingArea: provinceCity || "Ngoại thành",
+    shippingArea: provinceCity || "Toàn quốc",
     shippingFee: Number(settings.outerCityShippingFee) || 20000,
+    note: "Giao hàng tiêu chuẩn toàn quốc",
   };
 }
