@@ -188,13 +188,39 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     const { id } = await params;
 
-    // Soft delete - just set isActive to false
-    await prisma.product.update({
+    const product = await prisma.product.findUnique({
       where: { id },
-      data: { isActive: false },
+      include: {
+        _count: {
+          select: { orderItems: true, inventoryLogs: true, wishlists: true },
+        },
+      },
     });
 
-    return NextResponse.json({ success: true, message: "Ẩn sản phẩm thành công" });
+    if (!product) {
+      return NextResponse.json({ success: false, message: "Không tìm thấy sản phẩm" }, { status: 404 });
+    }
+
+    const hasHistory =
+      product._count.orderItems > 0 ||
+      product._count.inventoryLogs > 0 ||
+      product._count.wishlists > 0;
+
+    if (hasHistory) {
+      // Sản phẩm đã phát sinh đơn hàng/lịch sử kho: chỉ ẩn để giữ dữ liệu đối soát
+      await prisma.product.update({
+        where: { id },
+        data: { isActive: false },
+      });
+      return NextResponse.json({
+        success: true,
+        message: "Sản phẩm đã phát sinh đơn hàng hoặc lịch sử kho nên chỉ được ẩn khỏi cửa hàng",
+      });
+    }
+
+    // Chưa phát sinh dữ liệu liên quan: xóa vĩnh viễn để có thể xóa danh mục
+    await prisma.product.delete({ where: { id } });
+    return NextResponse.json({ success: true, message: "Xóa sản phẩm thành công" });
   } catch (error) {
     console.error("Delete product error:", error);
     return NextResponse.json({ success: false, message: "Có lỗi xảy ra" }, { status: 500 });

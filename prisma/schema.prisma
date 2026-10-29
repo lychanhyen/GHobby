@@ -67,10 +67,12 @@ enum InventoryChangeType {
 model User {
   id                 String               @id @default(uuid())
   username           String               @unique
+  email              String?              @unique
   passwordHash       String
   fullName           String
   phone              String?
   city               String?
+  address            String?
   role               Role                 @default(ADMIN)
   mustChangePassword Boolean              @default(true) // Buộc đổi mật khẩu ở lần đăng nhập đầu
   isActive           Boolean              @default(true) // Khoá / mở khoá tài khoản
@@ -147,6 +149,7 @@ model Product {
   isActive            Boolean        @default(true) // Ẩn / Hiện (Soft delete)
   orderItems          OrderItem[]
   inventoryLogs       InventoryLog[]
+  wishlists           Wishlist[]
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 
@@ -256,4 +259,14 @@ model StoreSetting {
   value       String   // Chuỗi JSON cấu hình
   description String?
   updatedAt   DateTime @updatedAt
+}
+
+model Wishlist {
+  id          String   @id @default(uuid())
+  userId      String
+  productId   String
+  createdAt   DateTime @default(now())
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
 }

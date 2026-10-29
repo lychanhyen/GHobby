@@ -17,15 +17,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { fullName, username, password, phone, city } = body as {
+    const { fullName, username, email, password, phone, city } = body as {
       fullName?: string;
       username?: string;
+      email?: string;
       password?: string;
       phone?: string;
       city?: string;
     };
 
-    if (!fullName || !username || !password) {
+    if (!fullName || !username || !email || !password) {
       return NextResponse.json(
         { success: false, message: "Vui lòng nhập đầy đủ thông tin" },
         { status: 400 }
@@ -34,8 +35,16 @@ export async function POST(req: NextRequest) {
 
     const trimmedUsername = username.trim();
     const trimmedFullName = fullName.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     const trimmedPhone = typeof phone === "string" ? phone.trim() : "";
     const trimmedCity = typeof city === "string" ? city.trim() : "";
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      return NextResponse.json(
+        { success: false, message: "Email không hợp lệ" },
+        { status: 400 }
+      );
+    }
 
     if (trimmedUsername.length < 3) {
       return NextResponse.json(
@@ -62,11 +71,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const existingEmail = await prisma.user.findFirst({
+      where: { email: { equals: trimmedEmail, mode: "insensitive" } },
+    });
+
+    if (existingEmail) {
+      return NextResponse.json(
+        { success: false, message: "Email đã được sử dụng" },
+        { status: 409 }
+      );
+    }
+
     const passwordHash = await hashPassword(password);
 
     const user = await prisma.user.create({
       data: {
         username: trimmedUsername,
+        email: trimmedEmail,
         passwordHash,
         fullName: trimmedFullName,
         phone: trimmedPhone || null,
@@ -87,6 +108,7 @@ export async function POST(req: NextRequest) {
         user: {
           id: user.id,
           username: user.username,
+          email: user.email,
           fullName: user.fullName,
           phone: user.phone,
           city: user.city,

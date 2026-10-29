@@ -4,12 +4,12 @@ import { prisma } from "@/lib/prisma";
 import {
   ArrowRight,
   AlertTriangle,
+  BarChart3,
   ClipboardList,
   Package,
   Plus,
   Settings,
   ShoppingCart,
-  Store,
 } from "lucide-react";
 
 export default async function AdminDashboard() {
@@ -39,6 +39,33 @@ export default async function AdminDashboard() {
     ]);
   } catch (error) {
     console.error("Dashboard stats error:", error);
+  }
+
+  // Chart data: orders by date (last 7 days)
+  let chartData: { date: string; count: number }[] = [];
+  try {
+    const since = new Date();
+    since.setDate(since.getDate() - 6);
+    since.setHours(0, 0, 0, 0);
+    const ordersRecent = await prisma.order.findMany({
+      where: { createdAt: { gte: since } },
+      select: { createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
+    const map = new Map<string, number>();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(since);
+      d.setDate(since.getDate() + i);
+      const key = d.toISOString().split("T")[0];
+      map.set(key, 0);
+    }
+    for (const o of ordersRecent) {
+      const key = o.createdAt.toISOString().split("T")[0];
+      map.set(key, (map.get(key) || 0) + 1);
+    }
+    chartData = Array.from(map.entries()).map(([date, count]) => ({ date, count }));
+  } catch (e) {
+    console.error("Chart data error:", e);
   }
 
   const stats = [
@@ -78,9 +105,9 @@ export default async function AdminDashboard() {
 
   const quickActions = [
     { label: "Thêm sản phẩm", description: "Tạo sản phẩm mới", href: "/admin/san-pham/tao-moi", icon: Plus },
-    { label: "Bán tại cửa hàng", description: "Mở màn hình POS", href: "/admin/pos", icon: Store },
     { label: "Xử lý đơn hàng", description: "Theo dõi đơn đang chờ", href: "/admin/don-hang", icon: ShoppingCart },
     { label: "Cấu hình cửa hàng", description: "Thông tin và vận chuyển", href: "/admin/cau-hinh", icon: Settings },
+    { label: "Xem thống kê", description: "Báo cáo doanh thu và đơn hàng", href: "/admin/thong-ke", icon: BarChart3 },
   ];
 
   return (
@@ -94,10 +121,6 @@ export default async function AdminDashboard() {
           <p className="mt-1 text-sm text-ink-500">Xin chào, {sessionData?.user.fullName}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/pos" className="btn-outline">
-            <Store className="h-4 w-4" />
-            Bán tại cửa hàng
-          </Link>
           <Link href="/admin/san-pham/tao-moi" className="btn-primary">
             <Plus className="h-4 w-4" />
             Thêm sản phẩm
@@ -133,6 +156,46 @@ export default async function AdminDashboard() {
           );
         })}
       </div>
+
+      {/* Sales chart */}
+      <section className="card">
+        <div className="border-b border-ink-200 px-5 py-4">
+          <h2 className="text-sm font-bold text-ink-900">Doanh số trong 7 ngày gần nhất</h2>
+        </div>
+        <div className="px-5 pb-4">
+          {chartData && chartData.length > 0 ? (
+            <>
+              <div className="flex h-[300px] items-stretch justify-between gap-3">
+                {chartData.map((d) => {
+                  const max = Math.max(...chartData.map((c) => c.count), 1);
+                  // Dùng chiều cao px cố định để cột luôn hiển thị,
+                  // tránh trường hợp height % bị tính theo parent rỗng.
+                  const heightPx = d.count > 0 ? Math.max((d.count / max) * 220, 6) : 0;
+                  return (
+                    <div key={d.date} className="flex h-full flex-1 flex-col items-center gap-1">
+                      <span className="text-[10px] font-bold tracking-wide text-ink-500">
+                        {d.count}
+                      </span>
+                      <div className="flex w-full flex-1 items-end">
+                        <div
+                          className="w-full rounded-t-md bg-accent-600 transition-colors"
+                          style={{ height: `${heightPx}px` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-bold text-ink-700">
+                        {d.date.slice(5)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[11px] text-ink-500">Nguồn dữ liệu: đơn hàng thực tế từ hệ thống</p>
+            </>
+          ) : (
+            <p className="text-sm text-ink-500">Chưa có dữ liệu đơn hàng</p>
+          )}
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <section className="card lg:col-span-3">

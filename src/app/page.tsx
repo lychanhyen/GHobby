@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -12,10 +13,9 @@ import {
   RotateCcw,
   ShieldCheck,
   Truck,
-  Zap,
 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import { getCategories, getProducts } from "@/lib/products";
+import { getCategories, getProductPurchaseCounts, getProducts } from "@/lib/products";
 import { getStoreSettings } from "@/lib/settings";
 import { formatCurrencyVND } from "@/lib/utils";
 
@@ -33,18 +33,49 @@ export default async function HomePage() {
   }
   let categories: any[] = [];
   let allProducts: any[] = [];
+  let purchaseCounts: Record<string, number> = {};
   try {
-    [categories, allProducts] = await Promise.all([getCategories(), getProducts()]);
+    [categories, allProducts, purchaseCounts] = await Promise.all([
+      getCategories(),
+      getProducts(),
+      getProductPurchaseCounts(),
+    ]);
   } catch {
     categories = [];
     allProducts = [];
+    purchaseCounts = {};
   }
 
   const inStockProducts = allProducts.filter((p) => p.productType === "IN_STOCK");
   const preOrderProducts = allProducts.filter((p) => p.productType === "PRE_ORDER");
-  const featured = inStockProducts[0] || allProducts[0];
-  const secondary = inStockProducts[1] || allProducts[1];
+
+  // Ảnh hero mặc định: ưu tiên pre-order 1, 2, 3...; nếu không có pre-order thì lấy
+  // sản phẩm bán chạy theo lượt mua. Chỉ có 1 pre-order: ảnh phụ là sản phẩm bán chạy.
+  const purchaseCount = (product: any) => purchaseCounts[product.id] || 0;
+  const preOrderWithImages = preOrderProducts.filter((p) => p.imageUrl);
+  const bestSellers = allProducts
+    .filter((p) => p.imageUrl)
+    .sort((a, b) => purchaseCount(b) - purchaseCount(a));
+  const featured = preOrderWithImages[0] || bestSellers[0] || null;
+  const secondary =
+    preOrderWithImages.length >= 2
+      ? preOrderWithImages[1]
+      : bestSellers.find((p) => p.id !== featured?.id) || null;
   const zaloHref = `https://zalo.me/${(settings.shopHotline || "").replace(/\D/g, "")}`;
+  const expressRadiusKm = Number(settings.expressRadiusKm) || 3;
+  const brandTagline = settings.brandTagline || "Gunpla & Figure";
+  const heroBadges =
+    Array.isArray(settings.heroBadges) && settings.heroBadges.length > 0
+      ? settings.heroBadges
+      : ["HG · RG · MG · PG", "Cọc 10%", "Đóng gói 5 lớp"];
+  const heroImageUrl = (settings.heroImageUrl || "").trim();
+  const heroSecondaryImageUrl = (settings.heroSecondaryImageUrl || "").trim();
+  const featuredImage = heroImageUrl || featured?.imageUrl;
+  const secondaryImage = heroSecondaryImageUrl || secondary?.imageUrl;
+  // Ô hỏa tốc dùng ảnh sản phẩm khác với 2 ảnh hero để không bị lặp hình
+  const expressProduct =
+    bestSellers.find((p) => p.id !== featured?.id && p.id !== secondary?.id) || null;
+  const expressImage = expressProduct?.imageUrl || secondaryImage || featuredImage;
 
   return (
     <div className="pb-20">
@@ -52,15 +83,19 @@ export default async function HomePage() {
       <section className="border-b border-ink-200 bg-[#edeae3]">
         <div className="container-page grid items-center gap-10 py-10 lg:grid-cols-12 lg:gap-14 lg:py-16">
           <div className="lg:col-span-6">
-            <p className="eyebrow">Bandai Spirits · Kotobukiya · Chính hãng</p>
+            <p className="eyebrow">{settings.heroEyebrow || "Bandai Spirits · Kotobukiya · Chính hãng"}</p>
             <h1 className="mt-4 text-[2rem] font-bold leading-[1.08] tracking-tight text-ink-950 sm:text-[2.55rem] lg:text-[3.05rem]">
-              Mô hình chính hãng
-              <br className="hidden sm:block" /> cho người yêu{" "}
-              <span className="text-accent-600">từng chi tiết</span>.
+              {settings.heroTitle || "Mô hình chính hãng cho người yêu"}
+              {settings.heroHighlight && (
+                <>
+                  <br className="hidden sm:block" />{" "}
+                  <span className="text-accent-600">{settings.heroHighlight}</span>.
+                </>
+              )}
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-relaxed text-ink-600 sm:text-[15px]">
-              Gunpla Bandai, figure anime và dụng cụ lắp ráp — chọn kỹ từng sản phẩm,
-              đóng gói cẩn thận, giao đúng hẹn trên toàn quốc.
+              {settings.heroDescription ||
+                "Gunpla Bandai, figure anime và dụng cụ lắp ráp — chọn kỹ từng sản phẩm, đóng gói cẩn thận, giao đúng hẹn trên toàn quốc."}
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -74,40 +109,43 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-500">
-              <span>HG · RG · MG · PG</span>
-              <span className="hidden h-3 w-px bg-ink-300 sm:block" />
-              <span>Cọc 10%</span>
-              <span className="hidden h-3 w-px bg-ink-300 sm:block" />
-              <span>Đóng gói 5 lớp</span>
+              {heroBadges.map((badge: string, index: number) => (
+                <Fragment key={`${badge}-${index}`}>
+                  {index > 0 && <span className="hidden h-3 w-px bg-ink-300 sm:block" />}
+                  <span>{badge}</span>
+                </Fragment>
+              ))}
             </div>
           </div>
 
           <div className="lg:col-span-6">
             <div className="grid h-[300px] grid-cols-5 grid-rows-6 gap-2.5 sm:h-[400px] sm:gap-3 lg:h-[440px]">
-              {featured ? (
+              {featuredImage ? (
                 <Link
-                  href={`/san-pham/${featured.slug}`}
+                  href={heroImageUrl ? "#hang-co-san" : `/san-pham/${featured.slug}`}
                   className="group relative col-span-3 row-span-6 overflow-hidden rounded-lg border border-ink-200 bg-white"
                 >
                   <Image
-                    src={featured.imageUrl}
-                    alt={featured.name}
+                    src={featuredImage}
+                    alt={heroImageUrl ? "Ảnh hero cửa hàng" : featured.name}
                     fill
                     priority
                     sizes="(max-width: 1024px) 60vw, 30vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-950/90 via-ink-950/35 to-transparent p-4 pt-12">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-200">
-                      {featured.brand}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-white">
-                      {featured.name}
-                    </p>
-                    <p className="mt-1.5 text-sm font-bold text-white">
-                      {formatCurrencyVND(featured.sellingPrice)}
-                    </p>
-                  </div>
+                  {!heroImageUrl && featured && (
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-950/90 via-ink-950/35 to-transparent p-4 pt-12">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-200">
+                        {featured.brand}
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-white">
+                        {featured.name}
+                      </p>
+                      <p className="mt-1.5 text-sm font-bold text-white">
+                        {formatCurrencyVND(featured.sellingPrice)}
+                      </p>
+                    </div>
+                  )}
                 </Link>
               ) : (
                 <div className="col-span-3 row-span-6 flex items-center justify-center rounded-lg bg-ink-950 text-4xl font-bold tracking-tight text-white">
@@ -115,14 +153,14 @@ export default async function HomePage() {
                 </div>
               )}
 
-              {secondary ? (
+              {secondaryImage ? (
                 <Link
-                  href={`/san-pham/${secondary.slug}`}
+                  href={heroSecondaryImageUrl ? "#hang-co-san" : `/san-pham/${secondary.slug}`}
                   className="group relative col-span-2 row-span-3 overflow-hidden rounded-lg border border-ink-200 bg-white"
                 >
                   <Image
-                    src={secondary.imageUrl}
-                    alt={secondary.name}
+                    src={secondaryImage}
+                    alt={heroSecondaryImageUrl ? "Ảnh hero phụ" : secondary.name}
                     fill
                     sizes="(max-width: 1024px) 40vw, 20vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
@@ -134,13 +172,33 @@ export default async function HomePage() {
 
               <Link
                 href="/tra-cuu-don-hang"
-                className="col-span-2 row-span-3 flex flex-col justify-between rounded-lg bg-ink-950 p-4 text-white transition-colors hover:bg-ink-900"
+                className="group relative col-span-2 row-span-3 flex flex-col justify-between overflow-hidden rounded-lg bg-ink-950 p-4 text-white"
               >
-                <Zap className="h-5 w-5 text-accent-500" />
-                <div>
-                  <p className="text-[17px] font-bold leading-tight">Hỏa tốc dưới 3km</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-ink-400">
-                    Miễn phí giao nội bộ. Trên 3km nhắn Zalo để báo phí.
+                {expressImage && (
+                  <>
+                    <Image
+                      src={expressImage}
+                      alt={expressProduct?.name || "Ảnh nền giao hàng hỏa tốc"}
+                      fill
+                      sizes="(max-width: 1024px) 40vw, 20vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink-950/90 via-ink-950/45 to-ink-950/10" />
+                  </>
+                )}
+                <img
+                  src="/images/express-truck.svg"
+                  alt="Xe giao hàng hỏa tốc"
+                  width={96}
+                  height={64}
+                  className="relative z-10 h-12 w-auto self-start drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]"
+                />
+                <div className="relative z-10">
+                  <p className="text-[17px] font-bold leading-tight">
+                    Hỏa tốc dưới {expressRadiusKm}km
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-ink-100">
+                    Miễn phí giao nội bộ. Trên {expressRadiusKm}km nhắn Zalo để báo phí.
                   </p>
                 </div>
               </Link>
@@ -154,12 +212,16 @@ export default async function HomePage() {
         <div className="container-page">
           <div className="grid grid-cols-2 gap-px bg-ink-200 lg:grid-cols-4">
             {[
-              { icon: BadgeCheck, title: "Chính hãng 100%", desc: "Bandai Spirits & Kotobukiya" },
+              {
+                icon: BadgeCheck,
+                title: "Chính hãng 100%",
+                desc: `${brandTagline} chính hãng`,
+              },
               { icon: PackageCheck, title: "Đóng gói 5 lớp", desc: "Chống móp hộp kit tối đa" },
               {
                 icon: Truck,
                 title: `Toàn quốc ${(settings.outerCityShippingFee || 20000).toLocaleString("vi-VN")}đ`,
-                desc: "Hỏa tốc dưới 3km miễn phí",
+                desc: `Hỏa tốc dưới ${expressRadiusKm}km miễn phí`,
               },
               { icon: CreditCard, title: "Cọc 10% VietQR", desc: "Giữ hàng, thanh toán phần còn lại sau" },
             ].map((item) => {

@@ -11,6 +11,7 @@ import {
   getShippingMethodLabel,
 } from "@/lib/order-status";
 import OrderPaymentSection from "@/components/OrderPaymentSection";
+import CancelOrderButton from "@/components/CancelOrderButton";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -204,6 +205,15 @@ export default async function OrderDetailPage({
               )}
             </dl>
           </div>
+
+          {/* Cancel action */}
+          {order.status !== "CANCELLED" && order.status !== "RETURNED" && order.status !== "COMPLETED" && (
+            <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
+              <h2 className="text-base font-bold text-ink-950">Huỷ đơn hàng</h2>
+              <p className="mt-2 text-sm text-ink-500">Bạn có thể huỷ đơn nhưng tiền cọc sẽ không được hoàn lại.</p>
+              <CancelOrderButton orderCode={order.orderCode} token={token || undefined} />
+            </div>
+          )}
 
           {/* Order Summary */}
           <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">

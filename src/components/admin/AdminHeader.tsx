@@ -4,14 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ChevronDown,
   ExternalLink,
   Home,
   LogOut,
   Menu,
   Settings,
   ShoppingBag,
-  UserRound,
   X,
 } from "lucide-react";
 import { adminMenu, findAdminPageTitle, isMenuItemActive } from "./menu";
@@ -78,99 +76,18 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <Link
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              prefetch={true}
-              className="hidden h-9 items-center gap-2 rounded-md border border-ink-200 px-3 text-[12px] font-bold text-ink-600 transition-colors hover:border-ink-300 hover:bg-ink-50 hover:text-ink-900 sm:inline-flex"
+            <span className="hidden text-left text-[12px] font-bold text-ink-900 sm:block max-w-[140px] truncate">
+              {user.fullName || user.username}
+            </span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Đăng xuất"
+              title="Đăng xuất"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-700"
             >
-              Xem cửa hàng
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-
-            <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((open) => !open)}
-                aria-expanded={menuOpen}
-                aria-haspopup="menu"
-                className="inline-flex h-10 items-center gap-2 rounded-md px-1.5 transition-colors hover:bg-ink-50 sm:px-2"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-100 text-ink-700">
-                  <UserRound className="h-4 w-4" />
-                </span>
-                <span className="hidden text-left sm:block">
-                  <span className="block max-w-[140px] truncate text-[12px] font-bold leading-tight text-ink-900">
-                    {user.fullName || user.username}
-                  </span>
-                  <span className="block text-[10px] font-medium uppercase tracking-wide text-ink-400">
-                    {user.role === "ADMIN" ? "Quản trị viên" : "Nhân viên"}
-                  </span>
-                </span>
-                <ChevronDown
-                  className={`h-3.5 w-3.5 text-ink-400 transition-transform duration-200 ${
-                    menuOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 mt-2 w-60 overflow-hidden rounded-lg border border-ink-200 bg-white py-1 shadow-lift animate-fade-up"
-                >
-                  <div className="px-3 py-2.5">
-                    <p className="truncate text-sm font-bold text-ink-900">
-                      {user.fullName || user.username}
-                    </p>
-                    <p className="truncate text-xs text-ink-500">{user.username}</p>
-                  </div>
-                  <div className="border-t border-ink-100" />
-                  <Link
-                    href="/"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 transition-colors hover:bg-ink-50 hover:text-ink-900"
-                  >
-                    <Home className="h-4 w-4 text-ink-400" />
-                    Về trang chủ
-                  </Link>
-                  <Link
-                    href="/profile"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 transition-colors hover:bg-ink-50 hover:text-ink-900"
-                  >
-                    <UserRound className="h-4 w-4 text-ink-400" />
-                    Trang cá nhân
-                  </Link>
-                  <Link
-                    href="/profile/don-hang"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 transition-colors hover:bg-ink-50 hover:text-ink-900"
-                  >
-                    <ShoppingBag className="h-4 w-4 text-ink-400" />
-                    Đơn hàng của tôi
-                  </Link>
-                  <Link
-                    href="/admin/cau-hinh"
-                    prefetch={true}
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 transition-colors hover:bg-ink-50 hover:text-ink-900"
-                  >
-                    <Settings className="h-4 w-4 text-ink-400" />
-                    Cấu hình cửa hàng
-                  </Link>
-                  <div className="border-t border-ink-100" />
-                  <button
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-accent-700 transition-colors hover:bg-accent-50"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Đăng xuất
-                  </button>
-                </div>
-              )}
-            </div>
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </header>
@@ -235,14 +152,13 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
             </nav>
 
             <div className="border-t border-ink-800 p-3">
-              <Link
-                href="/"
-                prefetch={true}
-                className="flex items-center justify-between rounded-md px-3 py-2.5 text-[12px] font-medium text-ink-400 transition-colors hover:bg-white/5 hover:text-white hover:shadow-lift"
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-[12px] font-medium text-ink-400 transition-colors hover:bg-white/5 hover:text-white hover:shadow-lift"
               >
-                Xem cửa hàng
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
+                <LogOut className="h-3.5 w-3.5" />
+                Đăng xuất
+              </button>
             </div>
           </div>
         </div>

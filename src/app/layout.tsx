@@ -6,6 +6,10 @@ import { getCategories } from "@/lib/products";
 import ClientLayout from "@/components/ClientLayout";
 import TopLoadingBar from "@/components/TopLoadingBar";
 
+// Header, hero và danh mục đều đọc từ DB nên phải render động,
+// tránh bị đóng băng vào bản build tĩnh.
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

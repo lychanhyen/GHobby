@@ -688,3 +688,10 @@ stateDiagram-v2
 ## 15. CÂU HỎI CÒN MỞ (BẠN VUI LÒNG CHO Ý KIẾN KHI DUYỆT)
 1. **Lựa chọn Cơ sở dữ liệu Test (`TEST_DATABASE_URL`)**: Bạn dự định dùng **Dự án Supabase thứ 2 (Cloud)** hay cài đặt một database **PostgreSQL cục bộ trên máy tính** để chạy bộ test tự động?
 2. **Quy tắc hoàn cọc**: Bạn xác nhận đồng ý với quy tắc: Khách tự huỷ sau khi cọc $\rightarrow$ Mất cọc 10%; Shop/Hãng huỷ $\rightarrow$ Hoàn cọc 100%; Khách từ chối nhận COD $\rightarrow$ Mất cọc 10% (để bù phí đóng gói và ship hoàn)?
+
+---
+
+## Open Source First Policy (Tham khảo mã nguồn mở)
+- Khi triển khai một chức năng mới hoặc chưa quen thuộc, **TUYỆT ĐỐI KHÔNG** tự viết lại từ đầu (from scratch).
+- Bắt buộc phải tìm kiếm, nghiên cứu và tham khảo các giải pháp/mã nguồn mở đã verified trên GitHub (như Next.js Commerce, Shadcn UI, Supabase Examples, v.v.).
+- Ưu tiên tái sử dụng các mẫu thiết kế (design patterns), thư viện chuẩn và best practices đã được cộng đồng kiểm chứng để tối ưu hiệu năng và tránh phát sinh bug logic.

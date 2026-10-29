@@ -6,7 +6,6 @@ import {
   Package,
   Settings,
   ShoppingCart,
-  Store,
   TrendingUp,
   Users,
   Warehouse,
@@ -32,7 +31,6 @@ export const adminMenu: AdminMenuGroup[] = [
   {
     label: "Bán hàng",
     items: [
-      { href: "/admin/pos", label: "Bán tại cửa hàng", icon: Store },
       { href: "/admin/don-hang", label: "Đơn hàng", icon: ShoppingCart },
       { href: "/admin/nguoi-dung", label: "Khách hàng", icon: Users },
     ],

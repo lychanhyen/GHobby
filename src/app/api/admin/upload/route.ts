@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
 import { requireStaff } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
 import { processImage, generateImageFileName, getPublicUrl } from "@/lib/image-processor";
@@ -6,6 +8,19 @@ import { processImage, generateImageFileName, getPublicUrl } from "@/lib/image-p
 const BUCKET_NAME = "product-images";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+function hasSupabaseStorage(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  return Boolean(url && (key.startsWith("eyJ") || key.startsWith("sb_secret_")));
+}
+
+async function saveToLocalStorage(buffer: Buffer, fileName: string): Promise<string> {
+  const uploadDir = path.join(process.cwd(), "public", "uploads");
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(path.join(uploadDir, fileName), buffer);
+  return `/uploads/${fileName}`;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,30 +61,43 @@ export async function POST(req: NextRequest) {
     const fileName = generateImageFileName(file.name);
     const filePath = `${fileName}`;
 
-    // Upload to Supabase Storage
-    const { data, error } = await supabaseAdmin.storage
-      .from(BUCKET_NAME)
-      .upload(filePath, processedBuffer, {
-        contentType: "image/webp",
-        cacheControl: "3600",
-        upsert: false,
+    // Fallback to local storage when Supabase Storage is not configured (e.g. local dev)
+    if (!hasSupabaseStorage()) {
+      const localUrl = await saveToLocalStorage(processedBuffer, fileName);
+      return NextResponse.json({
+        success: true,
+        message: "Tải lên ảnh thành công",
+        data: { url: localUrl, path: filePath },
       });
-
-    if (error) {
-      console.error("Supabase upload error:", error);
-      return NextResponse.json({ success: false, message: "Lỗi khi tải lên ảnh" }, { status: 500 });
     }
 
-    const publicUrl = getPublicUrl(BUCKET_NAME, filePath);
+    // Upload to Supabase Storage
+    try {
+      const { error } = await supabaseAdmin.storage
+        .from(BUCKET_NAME)
+        .upload(filePath, processedBuffer, {
+          contentType: "image/webp",
+          cacheControl: "3600",
+          upsert: false,
+        });
 
-    return NextResponse.json({
-      success: true,
-      message: "Tải lên ảnh thành công",
-      data: {
-        url: publicUrl,
-        path: filePath,
-      },
-    });
+      if (error) throw error;
+
+      const publicUrl = getPublicUrl(BUCKET_NAME, filePath);
+      return NextResponse.json({
+        success: true,
+        message: "Tải lên ảnh thành công",
+        data: { url: publicUrl, path: filePath },
+      });
+    } catch (error) {
+      console.error("Supabase upload error, falling back to local storage:", error);
+      const localUrl = await saveToLocalStorage(processedBuffer, fileName);
+      return NextResponse.json({
+        success: true,
+        message: "Tải lên ảnh thành công",
+        data: { url: localUrl, path: filePath },
+      });
+    }
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json({ success: false, message: "Có lỗi xảy ra" }, { status: 500 });

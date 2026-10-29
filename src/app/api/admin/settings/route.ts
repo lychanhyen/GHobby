@@ -41,6 +41,21 @@ export async function GET(req: NextRequest) {
         depositPercentage: 10,
         autoCancelHours: 24,
       },
+      homepage_config: {
+        brandTagline: "Gunpla & Figure",
+        heroEyebrow: "Bandai Spirits · Kotobukiya · Chính hãng",
+        heroTitle: "Mô hình chính hãng cho người yêu",
+        heroHighlight: "từng chi tiết",
+        heroDescription:
+          "Gunpla Bandai, figure anime và dụng cụ lắp ráp — chọn kỹ từng sản phẩm, đóng gói cẩn thận, giao đúng hẹn trên toàn quốc.",
+        heroBadges: ["HG · RG · MG · PG", "Cọc 10%", "Đóng gói 5 lớp"],
+        heroImageUrl: "",
+        heroSecondaryImageUrl: "",
+      },
+      header_config: {
+        categoryIds: [],
+        limit: 6,
+      },
     };
 
     return NextResponse.json({

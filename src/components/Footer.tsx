@@ -14,6 +14,8 @@ export default function Footer({ settings, categories = [] }: FooterProps) {
     shopEmail: process.env.NEXT_PUBLIC_SHOP_EMAIL || "support@ghobby.vn",
     outerCityShippingFee: Number(process.env.NEXT_PUBLIC_OUTER_CITY_SHIPPING_FEE) || 20000,
   };
+  const expressRadiusKm = Number(shopSettings.expressRadiusKm) || 3;
+  const brandTagline = shopSettings.brandTagline || "Gunpla & Figure";
 
   return (
     <footer className="mt-20 border-t border-ink-200 bg-ink-950 text-ink-300">
@@ -30,8 +32,7 @@ export default function Footer({ settings, categories = [] }: FooterProps) {
               </span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-400">
-              Cửa hàng mô hình Gunpla Bandai, figure anime và dụng cụ lắp ráp chính hãng.
-              Chọn hàng kỹ, đóng gói cẩn thận, giao đúng hẹn.
+              Cửa hàng {brandTagline} chính hãng. Chọn hàng kỹ, đóng gói cẩn thận, giao đúng hẹn.
             </p>
 
             <div className="mt-5 space-y-2.5 text-sm">
@@ -145,7 +146,7 @@ export default function Footer({ settings, categories = [] }: FooterProps) {
                 </span>
               </li>
               <li className="flex justify-between gap-4">
-                <span>Hỏa tốc &lt; 3km</span>
+                <span>Hỏa tốc &lt; {expressRadiusKm}km</span>
                 <span className="font-bold text-white">Miễn phí</span>
               </li>
               <li className="flex justify-between gap-4">
@@ -167,7 +168,7 @@ export default function Footer({ settings, categories = [] }: FooterProps) {
               </span>
             </div>
             <p className="mt-4 text-xs leading-relaxed text-ink-500">
-              Hỏa tốc trên 3km vui lòng nhắn Zalo để shop báo phí trước khi giao.
+              Hỏa tốc trên {expressRadiusKm}km vui lòng nhắn Zalo để shop báo phí trước khi giao.
             </p>
           </div>
         </div>

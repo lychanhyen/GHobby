@@ -70,4 +70,16 @@ export interface StoreSettings {
   outerCityShippingFee: number;
   innerCityDistricts: string[];
   expressRadiusKm?: number;
+  // Giao diện trang chủ
+  brandTagline?: string;
+  heroEyebrow?: string;
+  heroTitle?: string;
+  heroHighlight?: string;
+  heroDescription?: string;
+  heroBadges?: string[];
+  heroImageUrl?: string;
+  heroSecondaryImageUrl?: string;
+  // Danh mục hiển thị trên header
+  headerCategoryIds?: string[];
+  headerCategoryLimit?: number;
 }

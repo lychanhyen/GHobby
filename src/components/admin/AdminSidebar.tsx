@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { adminMenu, isMenuItemActive } from "./menu";
 
 export default function AdminSidebar() {
@@ -66,14 +66,16 @@ export default function AdminSidebar() {
       </nav>
 
       <div className="border-t border-ink-800 p-3">
-        <Link
-          href="/"
-          prefetch={true}
-          className="flex items-center justify-between rounded-md px-3 py-2.5 text-[12px] font-medium text-ink-400 transition-[background,color] duration-200 hover:bg-white/5 hover:text-white hover:shadow-lift"
+        <button
+          onClick={async () => {
+            try { await fetch("/api/auth/logout", { method: "POST" }); } catch (e) {}
+            window.location.href = "/";
+          }}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-[12px] font-medium text-ink-400 transition-[background,color] duration-200 hover:bg-white/5 hover:text-white hover:shadow-lift text-left"
         >
-          Xem cửa hàng
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
+          <LogOut className="h-3.5 w-3.5" />
+          Đăng xuất
+        </button>
       </div>
     </aside>
   );

@@ -144,6 +144,40 @@ export async function getProducts(options?: {
   return [];
 }
 
+export async function getProductPurchaseCounts(): Promise<Record<string, number>> {
+  try {
+    const rows = await prisma.orderItem.groupBy({
+      by: ["productId"],
+      where: {
+        order: {
+          status: {
+            in: [
+              "PAYMENT_SUBMITTED",
+              "DEPOSITED",
+              "SHIPPING",
+              "COMPLETED",
+              "PREORDER_DEPOSITED",
+              "PREORDER_ARRIVED",
+            ],
+          },
+        },
+      },
+      _sum: { quantity: true },
+    });
+
+    const counts: Record<string, number> = {};
+    for (const row of rows) {
+      counts[row.productId] = row._sum.quantity || 0;
+    }
+    return counts;
+  } catch (error) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Database Error] Failed to fetch product purchase counts:", error);
+    }
+    return {};
+  }
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
     const product = await prisma.product.findUnique({

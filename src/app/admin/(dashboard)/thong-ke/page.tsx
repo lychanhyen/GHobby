@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Package,
 } from "lucide-react";
+import RevenueChart from "@/components/admin/RevenueChart";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export default async function StatisticsPage() {
         id: true,
         channel: true,
         totalProductAmount: true,
+        createdAt: true,
       },
     }),
     prisma.orderItem.findMany({
@@ -58,6 +60,13 @@ export default async function StatisticsPage() {
   const lowStock = lowStockProducts.filter(
     (p) => p.stockQuantity <= p.minStockAlert
   );
+
+  const chartData = completedOrders.reduce<Record<string, number>>((acc, o) => {
+    const m = new Date(o.createdAt || Date.now()).toLocaleString("vi-VN", { month: "short", year: "numeric" });
+    acc[m] = (acc[m] || 0) + (o.totalProductAmount || 0);
+    return acc;
+  }, {});
+  const chartRows = Object.entries(chartData).map(([name, value]) => ({ name, value }));
 
   const kpis = [
     {
@@ -124,6 +133,14 @@ export default async function StatisticsPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* Open Source Chart: Recharts BarChart for monthly revenue */}
+      <div className="card p-5">
+        <h2 className="text-sm font-bold text-ink-900">Doanh thu theo tháng</h2>
+        <div className="mt-4 h-[260px] w-full">
+          <RevenueChart data={chartRows} />
+        </div>
       </div>
 
       <div className="card overflow-hidden">

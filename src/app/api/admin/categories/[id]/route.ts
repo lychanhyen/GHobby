@@ -84,7 +84,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         {
           success: false,
           message:
-            "Không thể xóa danh mục vì vẫn còn chứa sản phẩm. Vui lòng chuyển hoặc xóa sản phẩm trước.",
+            `Không thể xóa danh mục vì vẫn còn ${productCount} sản phẩm (kể cả sản phẩm đã ẩn). Vui lòng xóa vĩnh viễn hoặc chuyển các sản phẩm sang danh mục khác trước.`,
         },
         { status: 400 }
       );

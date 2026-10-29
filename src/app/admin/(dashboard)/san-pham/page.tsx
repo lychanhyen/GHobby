@@ -281,8 +281,9 @@ export default function ProductsPage() {
             <div className="px-5 py-4">
               <p className="text-sm leading-relaxed text-ink-600">
                 Bạn có chắc chắn muốn xóa sản phẩm{" "}
-                <span className="font-bold text-ink-900">{deleteTarget.name}</span>? Hành động này
-                sẽ ẩn sản phẩm khỏi cửa hàng.
+                <span className="font-bold text-ink-900">{deleteTarget.name}</span>? Nếu sản phẩm
+                chưa có đơn hàng/lịch sử kho, sản phẩm sẽ bị xóa vĩnh viễn. Nếu đã phát sinh dữ
+                liệu, sản phẩm chỉ được ẩn khỏi cửa hàng để giữ lịch sử.
               </p>
             </div>
             <div className="flex justify-end gap-2 border-t border-ink-200 bg-ink-50 px-5 py-3.5">

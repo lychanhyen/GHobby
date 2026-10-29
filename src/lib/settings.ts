@@ -15,6 +15,17 @@ const DEFAULT_SETTINGS: StoreSettings = {
     .map((d) => d.trim())
     .filter(Boolean),
   expressRadiusKm: Number(process.env.NEXT_PUBLIC_EXPRESS_RADIUS_KM) || 3,
+  brandTagline: "Gunpla & Figure",
+  heroEyebrow: "Bandai Spirits · Kotobukiya · Chính hãng",
+  heroTitle: "Mô hình chính hãng cho người yêu",
+  heroHighlight: "từng chi tiết",
+  heroDescription:
+    "Gunpla Bandai, figure anime và dụng cụ lắp ráp — chọn kỹ từng sản phẩm, đóng gói cẩn thận, giao đúng hẹn trên toàn quốc.",
+  heroBadges: ["HG · RG · MG · PG", "Cọc 10%", "Đóng gói 5 lớp"],
+  heroImageUrl: "",
+  heroSecondaryImageUrl: "",
+  headerCategoryIds: [],
+  headerCategoryLimit: 6,
 };
 
 export async function getStoreSettings(): Promise<StoreSettings> {
@@ -48,6 +59,26 @@ export async function getStoreSettings(): Promise<StoreSettings> {
           if (parsed.bankId) merged.bankId = parsed.bankId;
           if (parsed.bankAccount) merged.bankAccount = parsed.bankAccount;
           if (parsed.bankAccountName) merged.bankAccountName = parsed.bankAccountName;
+        } else if (setting.key === "homepage_config") {
+          if (typeof parsed.brandTagline === "string") merged.brandTagline = parsed.brandTagline;
+          if (typeof parsed.heroEyebrow === "string") merged.heroEyebrow = parsed.heroEyebrow;
+          if (typeof parsed.heroTitle === "string") merged.heroTitle = parsed.heroTitle;
+          if (typeof parsed.heroHighlight === "string") merged.heroHighlight = parsed.heroHighlight;
+          if (typeof parsed.heroDescription === "string") merged.heroDescription = parsed.heroDescription;
+          if (Array.isArray(parsed.heroBadges)) {
+            merged.heroBadges = parsed.heroBadges.map((b: any) => String(b).trim()).filter(Boolean);
+          }
+          if (typeof parsed.heroImageUrl === "string") merged.heroImageUrl = parsed.heroImageUrl;
+          if (typeof parsed.heroSecondaryImageUrl === "string") {
+            merged.heroSecondaryImageUrl = parsed.heroSecondaryImageUrl;
+          }
+        } else if (setting.key === "header_config") {
+          if (Array.isArray(parsed.categoryIds)) {
+            merged.headerCategoryIds = parsed.categoryIds.map((id: any) => String(id)).filter(Boolean);
+          }
+          if (parsed.limit !== undefined && parsed.limit !== null) {
+            merged.headerCategoryLimit = Math.max(1, Number(parsed.limit) || 6);
+          }
         }
       } catch {
         // skip invalid JSON

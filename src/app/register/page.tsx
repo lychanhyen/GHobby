@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Lock, MapPin, Phone, User, UserPlus } from "lucide-react";
+import { Lock, Mail, MapPin, Phone, User, UserPlus } from "lucide-react";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     fullName: "",
     username: "",
+    email: "",
     phone: "",
     city: "",
     password: "",
@@ -48,6 +49,17 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
+    const trimmedEmail = formData.email.trim();
+    if (!trimmedEmail) {
+      setError("Vui lòng nhập email");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Email không hợp lệ");
+      return;
+    }
+
     if (formData.password.length < 6) {
       setError("Mật khẩu phải có ít nhất 6 ký tự");
       return;
@@ -67,6 +79,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           fullName: formData.fullName,
           username: formData.username,
+          email: trimmedEmail,
           phone: formData.phone,
           city: formData.city,
           password: formData.password,
@@ -130,6 +143,25 @@ export default function RegisterPage() {
                   className="input pl-10"
                   placeholder="Nhập họ và tên"
                   autoComplete="name"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="registerEmail" className="mb-1.5 block text-[13px] font-bold text-ink-800">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                <input
+                  id="registerEmail"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="input pl-10"
+                  placeholder="VD: email@example.com"
+                  autoComplete="email"
                   required
                 />
               </div>
