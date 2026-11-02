@@ -1,6 +1,9 @@
 import { Product } from "@/types/product";
+import { getSiteUrl } from "@/lib/site-url";
 
-export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+// URL công khai dùng cho canonical, Open Graph và JSON-LD.
+// Tự lấy domain production trên Vercel, fallback về localhost khi dev.
+export const BASE_URL = getSiteUrl();
 
 export function generateProductJsonLd(product: Product, settings?: { shopName?: string }) {
   const shopName = settings?.shopName || "GHobby Model Kit Shop";

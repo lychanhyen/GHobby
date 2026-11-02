@@ -95,6 +95,21 @@ export function getOrderStatusLabel(status: string): string {
   return ORDER_STATUS_LABELS[status] || status;
 }
 
-export function getShippingMethodLabel(shippingMethod: string): string {
+/**
+ * Tên phương thức nhận hàng hiển thị cho khách/admin.
+ * Ưu tiên tên phương thức shop đã cấu hình tại thời điểm đặt đơn.
+ */
+export function getShippingMethodLabel(
+  shippingMethod: string,
+  methodName?: string | null
+): string {
+  const name = (methodName || "").trim();
+  if (name) return name;
   return shippingMethod === "STORE_PICKUP" ? "Nhận tại cửa hàng" : "Giao hàng tận nơi";
+}
+
+/** Hiển thị tiền cọc: đơn miễn cọc theo phương thức giao hàng. */
+export function getDepositLabel(depositRequired: number, depositWaived?: boolean | null): string {
+  if (depositWaived || depositRequired <= 0) return "Miễn cọc";
+  return "Cần cọc 10%";
 }

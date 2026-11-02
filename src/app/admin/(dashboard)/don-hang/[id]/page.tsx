@@ -219,7 +219,10 @@ export default function OrderDetailAdminPage() {
             <p className="flex justify-between gap-4 py-2">
               <span className="text-ink-500">Phương thức nhận hàng</span>
               <span className="text-right font-medium text-ink-900">
-                {order.shippingMethod === "STORE_PICKUP" ? "Nhận tại cửa hàng" : "Giao hàng tận nơi"}
+                {order.shippingMethodName ||
+                  (order.shippingMethod === "STORE_PICKUP"
+                    ? "Nhận tại cửa hàng"
+                    : "Giao hàng tận nơi")}
               </span>
             </p>
             <p className="flex justify-between gap-4 py-2">
@@ -271,7 +274,17 @@ export default function OrderDetailAdminPage() {
             </div>
             <div className="flex justify-between gap-4 border-t border-ink-200 pt-3">
               <span className="font-bold text-ink-900">Tiền cọc</span>
-              <span className="font-bold text-accent-700">{formatCurrencyVND(order.depositRequired)}</span>
+              <span
+                className={`font-bold ${
+                  order.depositWaived || order.depositRequired <= 0
+                    ? "text-emerald-700"
+                    : "text-accent-700"
+                }`}
+              >
+                {order.depositWaived || order.depositRequired <= 0
+                  ? "Miễn cọc"
+                  : formatCurrencyVND(order.depositRequired)}
+              </span>
             </div>
           </div>
         </div>

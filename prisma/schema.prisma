@@ -195,7 +195,10 @@ model Order {
   customerPhone        String
   customerAddress      String
   provinceCity         String               // Tỉnh / Thành phố
-  shippingMethod       ShippingMethod       @default(DELIVERY) // Giao tận nơi hoặc nhận tại cửa hàng
+  shippingMethod       ShippingMethod       @default(DELIVERY) // Loại cơ bản: giao hàng / nhận tại shop
+  shippingMethodId     String?              // id phương thức giao hàng do shop tự cấu hình
+  shippingMethodName   String?              // tên phương thức tại thời điểm đặt đơn
+  depositWaived        Boolean              @default(false) // true = phương thức không yêu cầu cọc 10%
   shippingArea         String               // Khu vực (Nội thành / Ngoại thành) cấu hình được
   isInnerCity          Boolean              @default(false)
   shippingFee          Int                  // 0 (nhận tại cửa hàng / Zalo thỏa thuận) hoặc phí cố định (20.000đ)

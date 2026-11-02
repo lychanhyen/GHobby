@@ -133,7 +133,7 @@ export default async function OrderSuccessPage({
               )}
               <div className="min-w-0">
                 <p className="text-sm font-bold text-ink-950">
-                  {getShippingMethodLabel(order.shippingMethod)}
+                  {getShippingMethodLabel(order.shippingMethod, order.shippingMethodName)}
                 </p>
                 {isStorePickup ? (
                   <>
@@ -233,10 +233,17 @@ export default async function OrderSuccessPage({
                   {formatCurrencyVND(orderTotal)}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 font-bold text-amber-700">
-                <span>Tiền cọc cần thanh toán (10%)</span>
-                <span>{formatCurrencyVND(order.depositRequired)}</span>
-              </div>
+              {order.depositWaived || order.depositRequired <= 0 ? (
+                <div className="flex items-center justify-between gap-3 font-bold text-emerald-700">
+                  <span>Tiền cọc</span>
+                  <span>Miễn cọc</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3 font-bold text-amber-700">
+                  <span>Tiền cọc cần thanh toán (10%)</span>
+                  <span>{formatCurrencyVND(order.depositRequired)}</span>
+                </div>
+              )}
             </div>
           </div>
 

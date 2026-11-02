@@ -80,6 +80,31 @@ export default async function HomePage() {
   const zaloHref = `https://zalo.me/${(settings.shopHotline || "").replace(/\D/g, "")}`;
   const expressRadiusKm = Number(settings.expressRadiusKm) || 3;
   const brandTagline = settings.brandTagline || "Gunpla & Figure";
+
+  // Thông tin vận chuyển lấy theo các phương thức shop tự cấu hình (Cấu hình > Cấu hình vận chuyển).
+  const configuredShippingMethods: any[] = Array.isArray(settings.shippingMethods)
+    ? settings.shippingMethods
+    : [];
+  const hasConfiguredShippingMethods = configuredShippingMethods.length > 0;
+  const activeShippingMethods = configuredShippingMethods.filter(
+    (method) => method?.isActive !== false
+  );
+  const standardShippingMethod = activeShippingMethods.find(
+    (method) => method.type === "delivery" && Number(method.fee) > 0 && !method.requiresQuote
+  );
+  const expressShippingMethod = activeShippingMethods.find(
+    (method) => method.type === "delivery" && Number(method.fee) === 0 && !method.requiresQuote
+  );
+  const pickupShippingMethod = activeShippingMethods.find((method) => method.type === "pickup");
+  const showStandardShipping = !hasConfiguredShippingMethods || Boolean(standardShippingMethod);
+  const showExpressShipping = !hasConfiguredShippingMethods || Boolean(expressShippingMethod);
+  const showPickupShipping = !hasConfiguredShippingMethods || Boolean(pickupShippingMethod);
+  const anyMethodRequiresDeposit =
+    !hasConfiguredShippingMethods ||
+    activeShippingMethods.some((method) => method.requiresDeposit !== false);
+  const displayShippingFee = standardShippingMethod
+    ? Number(standardShippingMethod.fee)
+    : Number(settings.outerCityShippingFee) || 20000;
   const heroBadges =
     Array.isArray(settings.heroBadges) && settings.heroBadges.length > 0
       ? settings.heroBadges
@@ -254,12 +279,30 @@ export default async function HomePage() {
                   className="relative z-10 h-12 w-auto self-start drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]"
                 />
                 <div className="relative z-10">
-                  <p className="text-[17px] font-bold leading-tight">
-                    Hỏa tốc dưới {expressRadiusKm}km
-                  </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-ink-100">
-                    Miễn phí giao nội bộ. Trên {expressRadiusKm}km nhắn Zalo để báo phí.
-                  </p>
+                  {showExpressShipping ? (
+                    <>
+                      <p className="text-[17px] font-bold leading-tight">
+                        Hỏa tốc dưới {expressRadiusKm}km
+                      </p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-ink-100">
+                        Miễn phí giao nội bộ. Trên {expressRadiusKm}km nhắn Zalo để báo phí.
+                      </p>
+                    </>
+                  ) : showPickupShipping ? (
+                    <>
+                      <p className="text-[17px] font-bold leading-tight">Nhận tại cửa hàng</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-ink-100">
+                        Ghé shop nhận kit, kiểm tra hộp trực tiếp trước khi mang về.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[17px] font-bold leading-tight">Giao hàng toàn quốc</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-ink-100">
+                        Đóng gói 5 lớp, giao tận nơi trên toàn quốc.
+                      </p>
+                    </>
+                  )}
                 </div>
               </Link>
             </div>
@@ -280,10 +323,22 @@ export default async function HomePage() {
               { icon: PackageCheck, title: "Đóng gói 5 lớp", desc: "Chống móp hộp kit tối đa" },
               {
                 icon: Truck,
-                title: `Toàn quốc ${(settings.outerCityShippingFee || 20000).toLocaleString("vi-VN")}đ`,
-                desc: `Hỏa tốc dưới ${expressRadiusKm}km miễn phí`,
+                title: showStandardShipping
+                  ? `Toàn quốc ${displayShippingFee.toLocaleString("vi-VN")}đ`
+                  : "Giao hàng toàn quốc",
+                desc: showExpressShipping
+                  ? `Hỏa tốc dưới ${expressRadiusKm}km miễn phí`
+                  : showPickupShipping
+                    ? "Nhận tại cửa hàng, kiểm tra trực tiếp"
+                    : "Đóng gói cẩn thận, giao đúng hẹn",
               },
-              { icon: CreditCard, title: "Cọc 10% VietQR", desc: "Giữ hàng, thanh toán phần còn lại sau" },
+              {
+                icon: CreditCard,
+                title: anyMethodRequiresDeposit ? "Cọc 10% VietQR" : "Không cần đặt cọc",
+                desc: anyMethodRequiresDeposit
+                  ? "Giữ hàng, thanh toán phần còn lại sau"
+                  : "Miễn cọc theo phương thức giao hàng",
+              },
             ].map((item) => {
               const Icon = item.icon;
               return (

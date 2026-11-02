@@ -43,6 +43,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cod
       );
     }
 
+    if (order.depositWaived || order.depositRequired <= 0) {
+      return NextResponse.json(
+        { success: false, message: "Đơn hàng này không cần đặt cọc" },
+        { status: 400 }
+      );
+    }
+
     if (order.status === "PAYMENT_SUBMITTED") {
       return NextResponse.json({ success: false, message: "Đã ghi nhận chuyển khoản trước đó" }, { status: 400 });
     }

@@ -5,17 +5,14 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { formatCurrencyVND } from "@/lib/utils";
 import { Truck, Store, MapPin, Phone, ArrowRight, Zap } from "lucide-react";
-import { getShippingQuote } from "@/lib/shipping";
-
-type ShippingMethod = "DELIVERY" | "STORE_PICKUP";
-type ShippingOption = "STANDARD" | "EXPRESS_NEAR" | "EXPRESS_FAR" | "STORE_PICKUP";
+import { getActiveShippingMethods, getDefaultShippingMethod } from "@/lib/shipping";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, isHydrated, getTotalPrice, getDepositAmount, clearCart, hasMixedCart } = useCart();
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [shippingOption, setShippingOption] = useState<ShippingOption>("STANDARD");
+  const [selectedMethodId, setSelectedMethodId] = useState("");
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
@@ -57,27 +54,18 @@ export default function CheckoutPage() {
     );
   }
 
-  const shippingMethod: ShippingMethod =
-    shippingOption === "STORE_PICKUP" ? "STORE_PICKUP" : "DELIVERY";
-  const expressType =
-    shippingOption === "EXPRESS_NEAR"
-      ? "under3km"
-      : shippingOption === "EXPRESS_FAR"
-        ? "over3km"
-        : "standard";
-  const isStorePickup = shippingOption === "STORE_PICKUP";
-  const requiresZaloQuote = shippingOption === "EXPRESS_FAR";
+  const shippingMethods = getActiveShippingMethods(settings);
+  const selectedMethod =
+    shippingMethods.find((method) => method.id === selectedMethodId) ||
+    getDefaultShippingMethod(shippingMethods);
+
+  const isStorePickup = selectedMethod?.type === "pickup";
+  const requiresZaloQuote = Boolean(selectedMethod?.requiresQuote);
+  const isDepositWaived = Boolean(selectedMethod && !selectedMethod.requiresDeposit);
+  const shippingFee = selectedMethod ? Math.max(0, Number(selectedMethod.fee) || 0) : 0;
+  const depositAmount = isDepositWaived ? 0 : Math.round(getTotalPrice() * 0.1);
   const zaloHref = `https://zalo.me/${(settings.shopHotline || "").replace(/\D/g, "")}`;
-  const expressRadiusKm = settings.expressRadiusKm ?? 3;
-  const quote = getShippingQuote({
-    shippingMethod,
-    expressType,
-    provinceCity: formData.provinceCity,
-    customerAddress: formData.customerAddress,
-    settings,
-  });
-  const shippingFee = quote.shippingFee;
-  const shippingNote = quote.note;
+  const shippingNote = selectedMethod?.description || "";
 
   if (!isHydrated) {
     return (
@@ -138,7 +126,7 @@ export default function CheckoutPage() {
     if (!phoneDigits || phoneDigits.length < 9 || phoneDigits.length > 11) {
       newErrors.customerPhone = "Vui lòng nhập số điện thoại hợp lệ";
     }
-    if (shippingMethod === "DELIVERY") {
+    if (selectedMethod?.type === "delivery") {
       if (!formData.provinceCity.trim()) {
         newErrors.provinceCity = "Vui lòng nhập tỉnh/thành phố";
       }
@@ -155,10 +143,17 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedMethod) {
+      setErrors((prev) => ({
+        ...prev,
+        form: "Vui lòng chọn phương thức giao hàng",
+      }));
+      return;
+    }
     if (requiresZaloQuote) {
       setErrors((prev) => ({
         ...prev,
-        form: "Đơn hỏa tốc trên 3km cần shop báo phí trước. Vui lòng nhắn Zalo để được xác nhận.",
+        form: "Phương thức này cần shop báo phí trước. Vui lòng nhắn Zalo để được xác nhận.",
       }));
       return;
     }
@@ -173,8 +168,8 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          shippingMethod,
-          expressType: expressType,
+          shippingMethodId: selectedMethod.id,
+          shippingMethod: selectedMethod.type === "pickup" ? "STORE_PICKUP" : "DELIVERY",
           items: items.map((item) => ({
             productId: item.product.id,
             quantity: item.quantity,
@@ -203,42 +198,8 @@ export default function CheckoutPage() {
   const fieldError = (key: string) =>
     errors[key] ? "border-accent-300 focus:border-accent-600 focus:ring-accent-600/10" : "";
 
-  const shippingChoices: Array<{
-    id: ShippingOption;
-    icon: typeof Truck;
-    title: string;
-    description: string;
-    price: string;
-  }> = [
-    {
-      id: "STANDARD",
-      icon: Truck,
-      title: "Giao hàng tiêu chuẩn",
-      description: "Toàn quốc · 1–3 ngày",
-      price: formatCurrencyVND(settings.outerCityShippingFee),
-    },
-    {
-      id: "EXPRESS_NEAR",
-      icon: Zap,
-      title: `Hỏa tốc dưới ${expressRadiusKm}km`,
-      description: "Nội thành · trong 2 giờ",
-      price: "Miễn phí",
-    },
-    {
-      id: "EXPRESS_FAR",
-      icon: MapPin,
-      title: `Hỏa tốc trên ${expressRadiusKm}km`,
-      description: `Ngoài bán kính ${expressRadiusKm}km · shop báo phí trước`,
-      price: "Báo phí qua Zalo",
-    },
-    {
-      id: "STORE_PICKUP",
-      icon: Store,
-      title: "Nhận tại cửa hàng",
-      description: "Tự đến shop lấy hàng",
-      price: "Miễn phí",
-    },
-  ];
+  const getMethodIcon = (method: { type: string; requiresQuote: boolean; fee: number }) =>
+    method.type === "pickup" ? Store : method.requiresQuote ? MapPin : method.fee === 0 ? Zap : Truck;
 
   return (
     <div className="container-page py-8">
@@ -279,14 +240,20 @@ export default function CheckoutPage() {
                 Phương thức giao hàng *
               </label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {shippingChoices.map((choice) => {
-                  const Icon = choice.icon;
-                  const selected = shippingOption === choice.id;
+                {shippingMethods.length === 0 && (
+                  <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-800 sm:col-span-2">
+                    Shop hiện chưa mở phương thức giao hàng nào. Vui lòng liên hệ shop để
+                    được hướng dẫn đặt hàng.
+                  </p>
+                )}
+                {shippingMethods.map((method) => {
+                  const Icon = getMethodIcon(method);
+                  const selected = selectedMethod?.id === method.id;
                   return (
                     <button
-                      key={choice.id}
+                      key={method.id}
                       type="button"
-                      onClick={() => setShippingOption(choice.id)}
+                      onClick={() => setSelectedMethodId(method.id)}
                       aria-pressed={selected}
                       className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-colors duration-200 ${
                         selected
@@ -301,16 +268,27 @@ export default function CheckoutPage() {
                         strokeWidth={1.7}
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-bold text-ink-950">{choice.title}</span>
-                        <span className="mt-1 block text-xs leading-relaxed text-ink-500">
-                          {choice.description}
-                        </span>
+                        <span className="block text-sm font-bold text-ink-950">{method.name}</span>
+                        {method.description && (
+                          <span className="mt-1 block text-xs leading-relaxed text-ink-500">
+                            {method.description}
+                          </span>
+                        )}
+                        {!method.requiresDeposit && (
+                          <span className="mt-1.5 inline-flex rounded-sm border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                            Không cần cọc 10%
+                          </span>
+                        )}
                         <span
                           className={`mt-1.5 block text-xs font-bold ${
-                            choice.id === "EXPRESS_FAR" ? "text-amber-700" : "text-ink-900"
+                            method.requiresQuote ? "text-amber-700" : "text-ink-900"
                           }`}
                         >
-                          {choice.price}
+                          {method.requiresQuote
+                            ? "Báo phí qua Zalo"
+                            : method.fee === 0
+                              ? "Miễn phí"
+                              : formatCurrencyVND(method.fee)}
                         </span>
                       </span>
                       <span
@@ -326,19 +304,19 @@ export default function CheckoutPage() {
               </div>
 
               <p className="mt-2 text-[11px] leading-relaxed text-ink-500">
-                Hỏa tốc miễn phí trong bán kính {expressRadiusKm}km quanh cửa hàng. Địa chỉ trên{" "}
-                {expressRadiusKm}km vui lòng nhắn Zalo để shop báo phí trước khi giao.
+                Phí vận chuyển và tiền cọc áp dụng theo phương thức shop đang mở. Phương thức
+                có nhãn “Không cần cọc 10%” sẽ không thu tiền cọc.
               </p>
             </div>
 
             {requiresZaloQuote && (
               <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
                 <p className="text-sm font-bold text-amber-900">
-                  Hỏa tốc trên {expressRadiusKm}km cần báo phí
+                  {selectedMethod?.name || "Phương thức này"} cần shop báo phí trước
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-amber-800">
-                  Shop không tự thu phí hỏa tốc cho khoảng cách trên {expressRadiusKm}km. Nhắn Zalo
-                  để được báo phí và chốt đơn trước khi giao.
+                  Shop không tự thu phí cho phương thức này. Nhắn Zalo để được báo phí và
+                  chốt đơn trước khi giao.
                 </p>
                 <a
                   href={zaloHref}
@@ -481,11 +459,11 @@ export default function CheckoutPage() {
 
             <button
               type="submit"
-              disabled={loading || requiresZaloQuote}
+              disabled={loading || requiresZaloQuote || !selectedMethod}
               className="btn-primary mt-5 h-11 w-full px-5"
             >
               {requiresZaloQuote
-                ? "Nhắn Zalo để báo phí hỏa tốc"
+                ? "Nhắn Zalo để báo phí"
                 : loading
                   ? "Đang xử lý..."
                   : "Đặt hàng"}
@@ -543,12 +521,21 @@ export default function CheckoutPage() {
                   {formatCurrencyVND(getTotalPrice() + shippingFee)}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-bold text-amber-700">Tiền cọc cần thanh toán (10%)</span>
-                <span className="font-bold text-amber-700">
-                  {formatCurrencyVND(Math.round(getTotalPrice() * 0.1))}
-                </span>
-              </div>
+              {isDepositWaived ? (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-bold text-emerald-700">Tiền cọc</span>
+                  <span className="font-bold text-emerald-700">
+                    Miễn cọc theo phương thức này
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-bold text-amber-700">Tiền cọc cần thanh toán (10%)</span>
+                  <span className="font-bold text-amber-700">
+                    {formatCurrencyVND(depositAmount)}
+                  </span>
+                </div>
+              )}
             </div>
 
             <p className="mt-3 text-xs leading-relaxed text-ink-500">

@@ -27,6 +27,23 @@ export default function OrderPaymentSection({ order, settings, token }: OrderPay
   const accountNo = bankConfig.bankAccount || settings?.bankAccount || "";
   const accountName = bankConfig.bankAccountName || settings?.bankAccountName || "";
 
+  // Đơn miễn cọc (phương thức giao hàng không yêu cầu cọc 10%): không cần quét QR.
+  if (order.depositWaived || !depositAmount || depositAmount <= 0) {
+    return (
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 text-base font-bold text-emerald-900">
+          <CreditCard className="h-4 w-4 text-emerald-700" />
+          <span>Không cần đặt cọc</span>
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-emerald-800">
+          Đơn hàng của bạn dùng phương thức giao hàng được miễn cọc 10%
+          {order.shippingMethodName ? ` (${order.shippingMethodName})` : ""}. Shop sẽ liên hệ
+          xác nhận và giao hàng, bạn thanh toán khi nhận hàng.
+        </p>
+      </div>
+    );
+  }
+
   if (!accountNo || !accountName) {
     return (
       <div className="rounded-lg border border-ink-200 bg-white p-5 sm:p-6">

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { reserveStock } from "@/lib/inventory";
 import { getClientIp, getSession } from "@/lib/auth";
 import { getStoreSettings } from "@/lib/settings";
-import { getShippingQuote } from "@/lib/shipping";
+import { getActiveShippingMethods, getDefaultShippingMethod } from "@/lib/shipping";
 import crypto from "crypto";
 
 const ORDER_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -44,15 +44,12 @@ export async function POST(req: NextRequest) {
       provinceCity,
       items,
       note,
-      shippingMethod: rawShippingMethod,
+      shippingMethod: legacyShippingMethod,
+      shippingMethodId: rawShippingMethodId,
     } = body;
 
-    const shippingMethod: "DELIVERY" | "STORE_PICKUP" =
-      rawShippingMethod === "STORE_PICKUP" ? "STORE_PICKUP" : "DELIVERY";
-
-    if (rawShippingMethod && !["DELIVERY", "STORE_PICKUP"].includes(rawShippingMethod)) {
-      return NextResponse.json({ success: false, message: "Phương thức giao hàng không hợp lệ" }, { status: 400 });
-    }
+    const methodIdFromClient =
+      typeof rawShippingMethodId === "string" ? rawShippingMethodId.trim() : "";
 
     const name = typeof customerName === "string" ? customerName.trim() : "";
     const phone = typeof customerPhone === "string" ? customerPhone.trim() : "";
@@ -68,20 +65,6 @@ export async function POST(req: NextRequest) {
 
     if (!phone || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ success: false, message: "Vui lòng điền đầy đủ thông tin" }, { status: 400 });
-    }
-
-    if (shippingMethod === "DELIVERY") {
-      if (
-        typeof customerAddress !== "string" ||
-        customerAddress.trim().length === 0 ||
-        typeof provinceCity !== "string" ||
-        provinceCity.trim().length === 0
-      ) {
-        return NextResponse.json(
-          { success: false, message: "Vui lòng nhập địa chỉ và tỉnh/thành phố nhận hàng" },
-          { status: 400 }
-        );
-      }
     }
 
     if (typeof note === "string" && note.length > 500) {
@@ -125,25 +108,69 @@ export async function POST(req: NextRequest) {
     const sessionData = await getSession();
     const customerUserId =
       sessionData && sessionData.user.role !== "ADMIN" ? sessionData.user.id : null;
-    // For express shipping with over 3km requiring quote - check from body
-    const expressType =
-      body?.expressType === "under3km" || body?.expressType === "over3km"
-        ? body.expressType
-        : "standard";
-    if (expressType === "over3km") {
-      throw new CheckoutValidationError("Khoảng cách giao hàng trên 3km, vui lòng nhắn Zalo để shop báo phí hỏa tốc cụ thể.");
+
+    // Phương thức giao hàng lấy từ cấu hình của shop (admin có thể thêm/xoá/sửa).
+    const activeShippingMethods = getActiveShippingMethods(settings);
+    const legacyMethod =
+      typeof legacyShippingMethod === "string" ? legacyShippingMethod : "";
+
+    let selectedMethod = methodIdFromClient
+      ? activeShippingMethods.find((method) => method.id === methodIdFromClient)
+      : undefined;
+
+    // Client gửi mã phương thức cụ thể nhưng phương thức đã bị xoá/tắt -> báo lỗi,
+    // không tự ý thay bằng phương thức khác.
+    if (methodIdFromClient && !selectedMethod) {
+      return NextResponse.json(
+        { success: false, message: "Phương thức giao hàng không hợp lệ hoặc đã tạm đóng" },
+        { status: 400 }
+      );
     }
 
-    const quote = getShippingQuote({
-      shippingMethod,
-      expressType,
-      provinceCity,
-      customerAddress,
-      settings,
-    });
-    const shippingFee = quote.shippingFee;
-    const isInnerCity = quote.isInnerCity;
-    const shippingArea = quote.shippingArea;
+    if (!selectedMethod && legacyMethod === "STORE_PICKUP") {
+      selectedMethod = activeShippingMethods.find((method) => method.type === "pickup");
+    }
+    if (!selectedMethod && (legacyMethod === "" || legacyMethod === "DELIVERY")) {
+      selectedMethod = getDefaultShippingMethod(activeShippingMethods) || undefined;
+    }
+
+    if (!selectedMethod) {
+      return NextResponse.json(
+        { success: false, message: "Phương thức giao hàng không hợp lệ hoặc đã tạm đóng" },
+        { status: 400 }
+      );
+    }
+
+    if (selectedMethod.requiresQuote) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Phương thức "${selectedMethod.name}" cần shop báo phí trước. Vui lòng nhắn Zalo để được xác nhận.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const isPickupMethod = selectedMethod.type === "pickup";
+
+    if (!isPickupMethod) {
+      if (
+        typeof customerAddress !== "string" ||
+        customerAddress.trim().length === 0 ||
+        typeof provinceCity !== "string" ||
+        provinceCity.trim().length === 0
+      ) {
+        return NextResponse.json(
+          { success: false, message: "Vui lòng nhập địa chỉ và tỉnh/thành phố nhận hàng" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const shippingFee = Math.max(0, Number(selectedMethod.fee) || 0);
+    const shippingArea = isPickupMethod
+      ? "Tại cửa hàng"
+      : provinceCity || "Toàn quốc";
 
     let order: {
       id: string;
@@ -220,11 +247,26 @@ export async function POST(req: NextRequest) {
             const product = productMap.get(item.productId)!;
             totalProductAmount += product.sellingPrice * item.quantity;
           }
-          const depositRequired = Math.round(totalProductAmount * 0.1);
+
+          // Phương thức miễn cọc (đặc quyền shop cấu hình) => không thu 10%.
+          const requiresDeposit = selectedMethod!.requiresDeposit;
+          const depositRequired = requiresDeposit
+            ? Math.round(totalProductAmount * 0.1)
+            : 0;
 
           const orderCode = generateOrderCode();
           const viewToken = generateViewToken();
-          const isStorePickupOrder = shippingMethod === "STORE_PICKUP";
+          const isStorePickupOrder = isPickupMethod;
+
+          // Đơn miễn cọc vào thẳng trạng thái "đã cọc/đang xử lý" để không bị
+          // cron tự huỷ sau 24h và khách không phải quét QR cọc.
+          const initialStatus = isPreOrderOrder
+            ? requiresDeposit
+              ? "PREORDER_PENDING"
+              : "PREORDER_DEPOSITED"
+            : requiresDeposit
+              ? "PENDING_DEPOSIT"
+              : "DEPOSITED";
 
           const newOrder = await tx.order.create({
             data: {
@@ -235,14 +277,17 @@ export async function POST(req: NextRequest) {
               customerPhone: phone,
               customerAddress: isStorePickupOrder ? "Nhận tại cửa hàng" : customerAddress,
               provinceCity: isStorePickupOrder ? "" : provinceCity,
-              shippingMethod,
+              shippingMethod: isStorePickupOrder ? "STORE_PICKUP" : "DELIVERY",
+              shippingMethodId: selectedMethod!.id,
+              shippingMethodName: selectedMethod!.name,
+              depositWaived: !requiresDeposit,
               shippingArea: isStorePickupOrder ? "Tại cửa hàng" : shippingArea,
-              isInnerCity: isStorePickupOrder ? true : isInnerCity,
+              isInnerCity: isStorePickupOrder,
               shippingFee,
               totalProductAmount,
               depositRequired,
-              depositPaid: false,
-              status: isPreOrderOrder ? "PREORDER_PENDING" : "PENDING_DEPOSIT",
+              depositPaid: !requiresDeposit,
+              status: initialStatus,
               isPreOrderOrder,
               customerIp: ipAddress,
               note: note || null,
@@ -272,10 +317,12 @@ export async function POST(req: NextRequest) {
           await tx.orderStatusHistory.create({
             data: {
               orderId: newOrder.id,
-              fromStatus: isPreOrderOrder ? "PREORDER_PENDING" : "PENDING_DEPOSIT",
-              toStatus: isPreOrderOrder ? "PREORDER_PENDING" : "PENDING_DEPOSIT",
+              fromStatus: initialStatus,
+              toStatus: initialStatus,
               actorName: "SYSTEM",
-              note: "Tạo đơn hàng",
+              note: requiresDeposit
+                ? "Tạo đơn hàng"
+                : `Tạo đơn hàng - miễn cọc theo phương thức "${selectedMethod!.name}"`,
             },
           });
 

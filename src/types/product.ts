@@ -71,6 +71,23 @@ export interface HeroSlotConfig {
   productId?: string;
 }
 
+/** Phương thức giao hàng do shop tự cấu hình trong trang Cấu hình. */
+export type ShippingMethodType = "delivery" | "pickup";
+
+export interface ShippingMethodConfig {
+  id: string;
+  name: string;
+  description?: string;
+  /** Phí vận chuyển (VNĐ). 0 = miễn phí. */
+  fee: number;
+  /** true = khách phải cọc 10%; false = miễn cọc cho phương thức này. */
+  requiresDeposit: boolean;
+  /** true = khách nhắn Zalo để shop báo phí trước, không đặt trực tiếp. */
+  requiresQuote: boolean;
+  type: ShippingMethodType;
+  isActive: boolean;
+}
+
 export interface StoreSettings {
   shopName: string;
   shopAddress: string;
@@ -82,6 +99,8 @@ export interface StoreSettings {
   outerCityShippingFee: number;
   innerCityDistricts: string[];
   expressRadiusKm?: number;
+  /** Danh sách phương thức giao hàng do shop tự cấu hình (thêm/xoá/sửa, miễn cọc...). */
+  shippingMethods?: ShippingMethodConfig[];
   // Giao diện trang chủ
   brandTagline?: string;
   heroEyebrow?: string;

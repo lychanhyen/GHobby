@@ -17,6 +17,35 @@ import {
 
 type HeroSlotDraft = { mode: string; productId: string };
 
+type ShippingMethodDraft = {
+  id: string;
+  name: string;
+  description: string;
+  fee: number;
+  requiresDeposit: boolean;
+  requiresQuote: boolean;
+  type: "delivery" | "pickup";
+  isActive: boolean;
+};
+
+/** Đọc danh sách phương thức giao hàng từ DB thành dữ liệu cho form. */
+const normalizeShippingMethodsForForm = (input: any): ShippingMethodDraft[] => {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((raw: any, index: number) => ({
+      id: typeof raw?.id === "string" && raw.id ? raw.id : `method-${index + 1}`,
+      name: typeof raw?.name === "string" ? raw.name : "",
+      description: typeof raw?.description === "string" ? raw.description : "",
+      fee: Math.max(0, Math.round(Number(raw?.fee) || 0)),
+      requiresDeposit: raw?.requiresDeposit !== false,
+      requiresQuote: raw?.requiresQuote === true,
+      type: raw?.type === "pickup" ? ("pickup" as const) : ("delivery" as const),
+      isActive: raw?.isActive !== false,
+    }))
+    .filter((method: ShippingMethodDraft) => method.name.trim().length > 0);
+};
+
+
 const HERO_SLOT_MODE_VALUES = ["auto", "preorder", "featured"];
 
 const HERO_SLOT_LABELS = [
@@ -53,6 +82,7 @@ export default function SettingsPage() {
       outerCityShippingFee: 20000,
       innerCityDistricts: "",
       expressRadiusKm: 3,
+      shippingMethods: [] as ShippingMethodDraft[],
     },
     general_config: {
       shopName: "GHobby",
@@ -127,6 +157,9 @@ export default function SettingsPage() {
               ? data.data.shipping_config.innerCityDistricts.join(",")
               : data.data.shipping_config?.innerCityDistricts || "",
             expressRadiusKm: data.data.shipping_config?.expressRadiusKm || 3,
+            shippingMethods: normalizeShippingMethodsForForm(
+              data.data.shipping_config?.shippingMethods
+            ),
           },
           general_config: data.data.general_config || settings.general_config,
           homepage_config: {
@@ -254,6 +287,70 @@ export default function SettingsPage() {
       homepage_config: { ...prev.homepage_config, ...overrides },
     }));
     handleSave("homepage_config", buildHomepagePayload(overrides));
+  };
+
+  const addShippingMethod = () => {
+    setSettings((prev) => ({
+      ...prev,
+      shipping_config: {
+        ...prev.shipping_config,
+        shippingMethods: [
+          ...prev.shipping_config.shippingMethods,
+          {
+            id: `method-${Date.now()}`,
+            name: "",
+            description: "",
+            fee: Number(prev.shipping_config.outerCityShippingFee) || 20000,
+            requiresDeposit: true,
+            requiresQuote: false,
+            type: "delivery" as const,
+            isActive: true,
+          },
+        ],
+      },
+    }));
+  };
+
+  const updateShippingMethod = (index: number, patch: Partial<ShippingMethodDraft>) => {
+    setSettings((prev) => ({
+      ...prev,
+      shipping_config: {
+        ...prev.shipping_config,
+        shippingMethods: prev.shipping_config.shippingMethods.map((method, i) =>
+          i === index ? { ...method, ...patch } : method
+        ),
+      },
+    }));
+  };
+
+  const removeShippingMethod = (index: number) => {
+    setSettings((prev) => ({
+      ...prev,
+      shipping_config: {
+        ...prev.shipping_config,
+        shippingMethods: prev.shipping_config.shippingMethods.filter((_, i) => i !== index),
+      },
+    }));
+  };
+
+  const saveShipping = () => {
+    const methods = settings.shipping_config.shippingMethods
+      .filter((method) => method.name.trim().length > 0)
+      .map((method) => ({
+        ...method,
+        name: method.name.trim(),
+        description: method.description.trim(),
+        fee: Math.max(0, Math.round(Number(method.fee) || 0)),
+      }));
+
+    handleSave("shipping_config", {
+      ...settings.shipping_config,
+      innerCityDistricts: settings.shipping_config.innerCityDistricts
+        .split(",")
+        .map((district) => district.trim())
+        .filter(Boolean),
+      shippingMethods: methods,
+    });
   };
 
   const saveHeaderCategories = () => {
@@ -893,6 +990,160 @@ export default function SettingsPage() {
           <h2 className="text-sm font-bold text-ink-900">Cấu hình vận chuyển</h2>
         </div>
         <div className="space-y-4 p-5">
+          {/* Phương thức giao hàng do shop tự cấu hình */}
+          <div className="rounded-lg border border-ink-200 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-[12px] font-bold text-ink-800">Phương thức giao hàng</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-ink-500">
+                  Thêm, xoá hoặc sửa các phương thức hiển thị ở trang thanh toán. Bỏ chọn
+                  “Cần cọc 10%” nếu muốn miễn cọc cho phương thức đó. Phương thức đang tắt
+                  sẽ không hiện với khách.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addShippingMethod}
+                disabled={saving || settings.shipping_config.shippingMethods.length >= 10}
+                className="btn-outline shrink-0 px-3 py-1.5 text-xs"
+              >
+                + Thêm phương thức
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-3">
+              {settings.shipping_config.shippingMethods.length === 0 && (
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[12px] leading-relaxed text-amber-800">
+                  Chưa có phương thức nào. Khách sẽ không thể đặt hàng cho đến khi bạn thêm
+                  ít nhất một phương thức đang bật.
+                </p>
+              )}
+
+              {settings.shipping_config.shippingMethods.map((method, index) => (
+                <div
+                  key={method.id}
+                  className="rounded-md border border-ink-200 bg-ink-50/50 p-3"
+                >
+                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-[11px] font-bold text-ink-700">
+                        Tên phương thức
+                      </label>
+                      <input
+                        type="text"
+                        value={method.name}
+                        onChange={(e) => updateShippingMethod(index, { name: e.target.value })}
+                        className="input"
+                        placeholder="VD: Giao hàng tiêu chuẩn"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[11px] font-bold text-ink-700">
+                        Mô tả hiển thị
+                      </label>
+                      <input
+                        type="text"
+                        value={method.description}
+                        onChange={(e) =>
+                          updateShippingMethod(index, { description: e.target.value })
+                        }
+                        className="input"
+                        placeholder="VD: Toàn quốc · 1–3 ngày"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[11px] font-bold text-ink-700">
+                        Phí vận chuyển (VNĐ)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={1000}
+                        value={method.fee}
+                        onChange={(e) =>
+                          updateShippingMethod(index, {
+                            fee: Math.max(0, parseInt(e.target.value) || 0),
+                          })
+                        }
+                        className="input"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[11px] font-bold text-ink-700">
+                        Hình thức
+                      </label>
+                      <select
+                        value={method.type}
+                        onChange={(e) =>
+                          updateShippingMethod(index, {
+                            type: e.target.value === "pickup" ? "pickup" : "delivery",
+                          })
+                        }
+                        className="input"
+                      >
+                        <option value="delivery">Giao tận nơi (cần địa chỉ)</option>
+                        <option value="pickup">Nhận tại cửa hàng (không cần địa chỉ)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px]">
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={method.requiresDeposit}
+                        onChange={(e) =>
+                          updateShippingMethod(index, { requiresDeposit: e.target.checked })
+                        }
+                        className="h-4 w-4 rounded border-ink-300 text-accent-600"
+                      />
+                      <span className="font-medium text-ink-700">Cần cọc 10%</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={method.requiresQuote}
+                        onChange={(e) =>
+                          updateShippingMethod(index, { requiresQuote: e.target.checked })
+                        }
+                        className="h-4 w-4 rounded border-ink-300 text-accent-600"
+                      />
+                      <span className="font-medium text-ink-700">
+                        Báo phí qua Zalo (khách không đặt trực tiếp)
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={method.isActive}
+                        onChange={(e) =>
+                          updateShippingMethod(index, { isActive: e.target.checked })
+                        }
+                        className="h-4 w-4 rounded border-ink-300 text-accent-600"
+                      />
+                      <span className="font-medium text-ink-700">Đang bật</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeShippingMethod(index)}
+                      disabled={saving}
+                      className="ml-auto inline-flex items-center gap-1 text-[12px] font-bold text-accent-700 hover:text-accent-800 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Xoá
+                    </button>
+                  </div>
+
+                  {!method.requiresDeposit && (
+                    <p className="mt-1.5 text-[11px] font-medium text-emerald-700">
+                      Phương thức này được miễn cọc 10% cho khách.
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
@@ -906,6 +1157,10 @@ export default function SettingsPage() {
                 onChange={(e) => setSettings({ ...settings, shipping_config: { ...settings.shipping_config, outerCityShippingFee: parseInt(e.target.value) } })}
                 className="input"
               />
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-500">
+                Dùng cho phần giới thiệu trên website và làm phí mặc định khi thêm phương
+                thức mới.
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
@@ -920,15 +1175,19 @@ export default function SettingsPage() {
                 onChange={(e) => setSettings({ ...settings, shipping_config: { ...settings.shipping_config, expressRadiusKm: parseInt(e.target.value) || 3 } })}
                 className="input"
               />
+              <p className="mt-1 text-[11px] leading-relaxed text-ink-500">
+                Dùng cho phần giới thiệu trên website. Phí thực tế do các phương thức giao
+                hàng ở trên quyết định.
+              </p>
             </div>
           </div>
           <p className="rounded-md border border-ink-200 bg-ink-50 px-3.5 py-3 text-[12px] leading-relaxed text-ink-600">
-            Hỏa tốc trong bán kính {settings.shipping_config.expressRadiusKm ?? 3}km được miễn phí.
-            Địa chỉ ngoài bán kính này khách liên hệ Zalo để shop báo phí trước khi giao; hệ thống
-            không tự thu phí hỏa tốc.
+            Khách chỉ thấy các phương thức đang bật và không ở chế độ “Báo phí qua Zalo”.
+            Phương thức miễn cọc sẽ tạo đơn không cần thanh toán 10% và không bị tự huỷ sau
+            24 giờ.
           </p>
           <button
-            onClick={() => handleSave("shipping_config", { ...settings.shipping_config, innerCityDistricts: settings.shipping_config.innerCityDistricts.split(",").map((d: string) => d.trim()).filter(Boolean) })}
+            onClick={saveShipping}
             disabled={saving}
             className="btn-primary"
           >

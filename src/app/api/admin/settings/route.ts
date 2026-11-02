@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireStaff } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { buildDefaultShippingMethods } from "@/lib/shipping";
 
 export async function GET(req: NextRequest) {
   try {
@@ -32,6 +33,10 @@ export async function GET(req: NextRequest) {
         outerCityShippingFee: Number(process.env.NEXT_PUBLIC_OUTER_CITY_SHIPPING_FEE) || 20000,
         innerCityDistricts: (process.env.NEXT_PUBLIC_INNER_CITY_DISTRICTS || "").split(",").filter(Boolean),
         expressRadiusKm: Number(process.env.NEXT_PUBLIC_EXPRESS_RADIUS_KM) || 3,
+        shippingMethods: buildDefaultShippingMethods({
+          outerCityShippingFee: Number(process.env.NEXT_PUBLIC_OUTER_CITY_SHIPPING_FEE) || 20000,
+          expressRadiusKm: Number(process.env.NEXT_PUBLIC_EXPRESS_RADIUS_KM) || 3,
+        }),
       },
       general_config: {
         shopName: process.env.NEXT_PUBLIC_SHOP_NAME || "GHobby",
@@ -70,12 +75,26 @@ export async function GET(req: NextRequest) {
         : {}),
     };
 
+    const shippingConfig: any = {
+      ...defaultSettings.shipping_config,
+      ...(settingsObj.shipping_config && typeof settingsObj.shipping_config === "object"
+        ? settingsObj.shipping_config
+        : {}),
+    };
+    if (
+      !Array.isArray(shippingConfig.shippingMethods) ||
+      shippingConfig.shippingMethods.length === 0
+    ) {
+      shippingConfig.shippingMethods = buildDefaultShippingMethods(shippingConfig);
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         ...defaultSettings,
         ...settingsObj,
         homepage_config: homepageConfig,
+        shipping_config: shippingConfig,
       },
     });
   } catch (error) {

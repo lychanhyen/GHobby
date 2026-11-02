@@ -1,5 +1,6 @@
 import { HeroSlotConfig, HeroSlotMode, StoreSettings } from "@/types/product";
 import { prisma } from "@/lib/prisma";
+import { buildDefaultShippingMethods, normalizeShippingMethods } from "@/lib/shipping";
 
 const HERO_SLOT_MODES: HeroSlotMode[] = ["auto", "preorder", "featured"];
 
@@ -35,6 +36,10 @@ const DEFAULT_SETTINGS: StoreSettings = {
     .map((d) => d.trim())
     .filter(Boolean),
   expressRadiusKm: Number(process.env.NEXT_PUBLIC_EXPRESS_RADIUS_KM) || 3,
+  shippingMethods: buildDefaultShippingMethods({
+    outerCityShippingFee: Number(process.env.NEXT_PUBLIC_OUTER_CITY_SHIPPING_FEE) || 20000,
+    expressRadiusKm: Number(process.env.NEXT_PUBLIC_EXPRESS_RADIUS_KM) || 3,
+  }),
   brandTagline: "Gunpla & Figure",
   heroEyebrow: "Bandai Spirits · Kotobukiya · Chính hãng",
   heroTitle: "Mô hình chính hãng cho người yêu",
@@ -76,6 +81,12 @@ export async function getStoreSettings(): Promise<StoreSettings> {
               .map((d: string) => String(d).trim())
               .filter(Boolean);
           }
+          if (parsed.shippingMethods !== undefined) {
+            merged.shippingMethods = normalizeShippingMethods(
+              parsed.shippingMethods,
+              buildDefaultShippingMethods(merged)
+            );
+          }
         } else if (setting.key === "bank_config") {
           if (parsed.bankId) merged.bankId = parsed.bankId;
           if (parsed.bankAccount) merged.bankAccount = parsed.bankAccount;
@@ -107,6 +118,11 @@ export async function getStoreSettings(): Promise<StoreSettings> {
       } catch {
         // skip invalid JSON
       }
+    }
+
+    // Nếu DB chưa có danh sách phương thức giao hàng, dựng mặc định theo phí hiện tại.
+    if (!merged.shippingMethods || merged.shippingMethods.length === 0) {
+      merged.shippingMethods = buildDefaultShippingMethods(merged);
     }
 
     return merged;

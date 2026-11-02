@@ -33,6 +33,26 @@ export default function Header({ settings, categories = [] }: HeaderProps) {
   const outerCityShippingFee = Number(shopSettings.outerCityShippingFee) || 20000;
   const brandTagline = shopSettings.brandTagline || "Gunpla & Figure";
 
+  // Ưu tiên thông tin từ các phương thức giao hàng shop tự cấu hình.
+  const configuredShippingMethods: any[] = Array.isArray(shopSettings.shippingMethods)
+    ? shopSettings.shippingMethods
+    : [];
+  const hasConfiguredShippingMethods = configuredShippingMethods.length > 0;
+  const activeShippingMethods = configuredShippingMethods.filter(
+    (method) => method?.isActive !== false
+  );
+  const standardShippingMethod = activeShippingMethods.find(
+    (method) => method.type === "delivery" && Number(method.fee) > 0 && !method.requiresQuote
+  );
+  const expressShippingMethod = activeShippingMethods.find(
+    (method) => method.type === "delivery" && Number(method.fee) === 0 && !method.requiresQuote
+  );
+  const displayShippingFee = standardShippingMethod
+    ? Number(standardShippingMethod.fee)
+    : outerCityShippingFee;
+  const showExpressAnnouncement = !hasConfiguredShippingMethods || Boolean(expressShippingMethod);
+  const showStandardAnnouncement = !hasConfiguredShippingMethods || Boolean(standardShippingMethod);
+
   const configuredCategoryIds: string[] = Array.isArray(shopSettings.headerCategoryIds)
     ? shopSettings.headerCategoryIds
     : [];
@@ -91,11 +111,18 @@ export default function Header({ settings, categories = [] }: HeaderProps) {
       <div className="bg-ink-950 text-white">
         <div className="container-page flex h-8 items-center justify-between gap-4 text-[11px] tracking-wide">
           <p className="truncate text-ink-200">
-            Miễn phí giao hỏa tốc trong bán kính {expressRadiusKm}km
-            <span className="mx-2 text-ink-600">/</span>
-            <span className="hidden sm:inline">
-              Đồng giá {outerCityShippingFee.toLocaleString("vi-VN")}đ toàn quốc
-            </span>
+            {showExpressAnnouncement && (
+              <>Miễn phí giao hỏa tốc trong bán kính {expressRadiusKm}km</>
+            )}
+            {showExpressAnnouncement && showStandardAnnouncement && (
+              <span className="mx-2 text-ink-600">/</span>
+            )}
+            {showStandardAnnouncement && (
+              <span className={showExpressAnnouncement ? "hidden sm:inline" : undefined}>
+                Đồng giá {displayShippingFee.toLocaleString("vi-VN")}đ toàn quốc
+              </span>
+            )}
+            {!showExpressAnnouncement && !showStandardAnnouncement && <>Giao hàng toàn quốc</>}
           </p>
           <p className="hidden shrink-0 items-center gap-1.5 text-ink-300 sm:flex">
             Hotline/Zalo

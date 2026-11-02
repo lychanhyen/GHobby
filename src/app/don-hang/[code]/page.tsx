@@ -166,7 +166,7 @@ export default async function OrderDetailPage({
                   ) : (
                     <Truck className="h-4 w-4 shrink-0 text-ink-500" />
                   )}
-                  <span>{getShippingMethodLabel(order.shippingMethod)}</span>
+                  <span>{getShippingMethodLabel(order.shippingMethod, order.shippingMethodName)}</span>
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4 px-4 py-3">
@@ -237,10 +237,17 @@ export default async function OrderDetailPage({
                   {formatCurrencyVND(orderTotal)}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 font-bold text-amber-700">
-                <span>Tiền cọc cần thanh toán (10%)</span>
-                <span>{formatCurrencyVND(order.depositRequired)}</span>
-              </div>
+              {order.depositWaived || order.depositRequired <= 0 ? (
+                <div className="flex items-center justify-between gap-3 font-bold text-emerald-700">
+                  <span>Tiền cọc</span>
+                  <span>Miễn cọc theo phương thức giao hàng</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3 font-bold text-amber-700">
+                  <span>Tiền cọc cần thanh toán (10%)</span>
+                  <span>{formatCurrencyVND(order.depositRequired)}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

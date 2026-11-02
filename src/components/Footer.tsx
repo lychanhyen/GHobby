@@ -17,6 +17,33 @@ export default function Footer({ settings, categories = [] }: FooterProps) {
   const expressRadiusKm = Number(shopSettings.expressRadiusKm) || 3;
   const brandTagline = shopSettings.brandTagline || "Gunpla & Figure";
 
+  // Ưu tiên thông tin từ các phương thức giao hàng shop tự cấu hình.
+  const configuredShippingMethods: any[] = Array.isArray(shopSettings.shippingMethods)
+    ? shopSettings.shippingMethods
+    : [];
+  const hasConfiguredShippingMethods = configuredShippingMethods.length > 0;
+  const activeShippingMethods = configuredShippingMethods.filter(
+    (method) => method?.isActive !== false
+  );
+  const standardShippingMethod = activeShippingMethods.find(
+    (method) => method.type === "delivery" && Number(method.fee) > 0 && !method.requiresQuote
+  );
+  const expressShippingMethod = activeShippingMethods.find(
+    (method) => method.type === "delivery" && Number(method.fee) === 0 && !method.requiresQuote
+  );
+  const pickupShippingMethod = activeShippingMethods.find((method) => method.type === "pickup");
+  const quoteShippingMethod = activeShippingMethods.find((method) => method.requiresQuote);
+  const displayShippingFee = standardShippingMethod
+    ? Number(standardShippingMethod.fee)
+    : Number(shopSettings.outerCityShippingFee) || 20000;
+  const showStandardShipping = !hasConfiguredShippingMethods || Boolean(standardShippingMethod);
+  const showExpressShipping = !hasConfiguredShippingMethods || Boolean(expressShippingMethod);
+  const showPickupShipping = !hasConfiguredShippingMethods || Boolean(pickupShippingMethod);
+  const showQuoteNote = !hasConfiguredShippingMethods || Boolean(quoteShippingMethod);
+  const anyMethodRequiresDeposit =
+    !hasConfiguredShippingMethods ||
+    activeShippingMethods.some((method) => method.requiresDeposit !== false);
+
   return (
     <footer className="mt-20 border-t border-ink-200 bg-ink-950 text-ink-300">
       <div className="container-page py-12 lg:py-16">
@@ -139,23 +166,31 @@ export default function Footer({ settings, categories = [] }: FooterProps) {
               Giao hàng &amp; thanh toán
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm text-ink-300">
-              <li className="flex justify-between gap-4">
-                <span>Toàn quốc</span>
-                <span className="font-bold text-white">
-                  {(shopSettings.outerCityShippingFee || 20000).toLocaleString("vi-VN")}đ
-                </span>
-              </li>
-              <li className="flex justify-between gap-4">
-                <span>Hỏa tốc &lt; {expressRadiusKm}km</span>
-                <span className="font-bold text-white">Miễn phí</span>
-              </li>
-              <li className="flex justify-between gap-4">
-                <span>Nhận tại cửa hàng</span>
-                <span className="font-bold text-white">Miễn phí</span>
-              </li>
+              {showStandardShipping && (
+                <li className="flex justify-between gap-4">
+                  <span>Toàn quốc</span>
+                  <span className="font-bold text-white">
+                    {displayShippingFee.toLocaleString("vi-VN")}đ
+                  </span>
+                </li>
+              )}
+              {showExpressShipping && (
+                <li className="flex justify-between gap-4">
+                  <span>Hỏa tốc &lt; {expressRadiusKm}km</span>
+                  <span className="font-bold text-white">Miễn phí</span>
+                </li>
+              )}
+              {showPickupShipping && (
+                <li className="flex justify-between gap-4">
+                  <span>Nhận tại cửa hàng</span>
+                  <span className="font-bold text-white">Miễn phí</span>
+                </li>
+              )}
               <li className="flex justify-between gap-4 border-t border-ink-800 pt-2.5">
                 <span>Đặt cọc</span>
-                <span className="font-bold text-white">10%</span>
+                <span className="font-bold text-white">
+                  {anyMethodRequiresDeposit ? "10%" : "Miễn cọc"}
+                </span>
               </li>
             </ul>
 
@@ -167,9 +202,11 @@ export default function Footer({ settings, categories = [] }: FooterProps) {
                 COD
               </span>
             </div>
-            <p className="mt-4 text-xs leading-relaxed text-ink-500">
-              Hỏa tốc trên {expressRadiusKm}km vui lòng nhắn Zalo để shop báo phí trước khi giao.
-            </p>
+            {showQuoteNote && (
+              <p className="mt-4 text-xs leading-relaxed text-ink-500">
+                Hỏa tốc trên {expressRadiusKm}km vui lòng nhắn Zalo để shop báo phí trước khi giao.
+              </p>
+            )}
           </div>
         </div>
 
