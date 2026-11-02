@@ -144,6 +144,16 @@ export async function getProducts(options?: {
   return [];
 }
 
+// Các trạng thái được tính là "đã mua" khi thống kê lượt mua
+const PURCHASE_COUNT_STATUSES = [
+  "PAYMENT_SUBMITTED",
+  "DEPOSITED",
+  "SHIPPING",
+  "COMPLETED",
+  "PREORDER_DEPOSITED",
+  "PREORDER_ARRIVED",
+] as const;
+
 export async function getProductPurchaseCounts(): Promise<Record<string, number>> {
   try {
     const rows = await prisma.orderItem.groupBy({
@@ -151,14 +161,7 @@ export async function getProductPurchaseCounts(): Promise<Record<string, number>
       where: {
         order: {
           status: {
-            in: [
-              "PAYMENT_SUBMITTED",
-              "DEPOSITED",
-              "SHIPPING",
-              "COMPLETED",
-              "PREORDER_DEPOSITED",
-              "PREORDER_ARRIVED",
-            ],
+            in: [...PURCHASE_COUNT_STATUSES],
           },
         },
       },
@@ -175,6 +178,26 @@ export async function getProductPurchaseCounts(): Promise<Record<string, number>
       console.error("[Database Error] Failed to fetch product purchase counts:", error);
     }
     return {};
+  }
+}
+
+export async function getProductPurchaseCount(productId: string): Promise<number> {
+  try {
+    const aggregate = await prisma.orderItem.aggregate({
+      where: {
+        productId,
+        order: {
+          status: { in: [...PURCHASE_COUNT_STATUSES] },
+        },
+      },
+      _sum: { quantity: true },
+    });
+    return aggregate._sum.quantity || 0;
+  } catch (error) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Database Error] Failed to fetch product purchase count:", error);
+    }
+    return 0;
   }
 }
 

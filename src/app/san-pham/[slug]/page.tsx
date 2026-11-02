@@ -6,8 +6,11 @@ import { CalendarDays, MessageCircle } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
 import ProductCard from "@/components/ProductCard";
 import ProductPurchaseActions from "@/components/ProductPurchaseActions";
+import ProductReviewsSection from "@/components/ProductReviewsSection";
+import StarRating from "@/components/StarRating";
 import WishlistButton from "@/components/WishlistButton";
-import { getProductBySlug, getRelatedProducts } from "@/lib/products";
+import { getProductBySlug, getProductPurchaseCount, getRelatedProducts } from "@/lib/products";
+import { getProductReviewSummary, getProductReviews } from "@/lib/reviews";
 import { getStoreSettings } from "@/lib/settings";
 import { formatCurrencyVND } from "@/lib/utils";
 import { BASE_URL, generateProductJsonLd, generateBreadcrumbJsonLd } from "@/lib/seo";
@@ -68,6 +71,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   }
 
   const relatedProducts = await getRelatedProducts(product.id, product.categoryId, 4);
+  const [purchaseCount, reviewSummary, reviews] = await Promise.all([
+    getProductPurchaseCount(product.id),
+    getProductReviewSummary(product.id),
+    getProductReviews(product.id),
+  ]);
   let settings;
   try {
     settings = await getStoreSettings();
@@ -170,6 +178,31 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 {product.name}
               </h1>
 
+              {/* Lượt mua & đánh giá trung bình */}
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <StarRating value={reviewSummary.average} />
+                  <span className="font-bold text-ink-900">
+                    {reviewSummary.total > 0 ? reviewSummary.average.toFixed(1) : "Chưa có"}
+                  </span>
+                  <span className="text-ink-500">
+                    {reviewSummary.total > 0
+                      ? `(${reviewSummary.total} đánh giá)`
+                      : "đánh giá"}
+                  </span>
+                </div>
+                <span className="hidden h-3 w-px bg-ink-200 sm:block" />
+                <span className="text-ink-600">
+                  {purchaseCount > 0 ? (
+                    <>
+                      Đã bán <b className="font-bold text-ink-900">{purchaseCount}</b>
+                    </>
+                  ) : (
+                    "Chưa có lượt mua"
+                  )}
+                </span>
+              </div>
+
               {/* Pricing Box */}
               <div className="mt-5 rounded-lg border border-ink-200 bg-white p-4 sm:p-5">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -267,6 +300,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </div>
         </div>
       </article>
+
+      <ProductReviewsSection
+        productId={product.id}
+        summary={reviewSummary}
+        reviews={reviews}
+      />
 
       {/* Related Products Recommendation */}
       {relatedProducts.length > 0 && (

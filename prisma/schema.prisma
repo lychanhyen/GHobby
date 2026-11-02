@@ -81,6 +81,7 @@ model User {
   statusHistories    OrderStatusHistory[]
   confirmedOrders    Order[]              @relation("ConfirmedDepositUser")
   orders             Order[]              @relation("CustomerOrders")
+  reviews            Review[]
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 }
@@ -150,6 +151,7 @@ model Product {
   orderItems          OrderItem[]
   inventoryLogs       InventoryLog[]
   wishlists           Wishlist[]
+  reviews             Review[]
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 
@@ -210,6 +212,7 @@ model Order {
   items                OrderItem[]
   statusHistories      OrderStatusHistory[]
   inventoryLogs        InventoryLog[]
+  reviews              Review[]
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 
@@ -269,4 +272,25 @@ model Wishlist {
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
+}
+
+// 11. Đánh giá sản phẩm (chỉ khách đã mua hàng)
+model Review {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId   String?  // Đơn hàng đã mua (để xác thực người mua)
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  rating    Int      // 1..5 sao
+  comment   String
+  images    String[] @default([]) // Tối đa 3 ảnh
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId]) // Mỗi khách chỉ đánh giá 1 lần / sản phẩm
+  @@index([productId, createdAt])
+  @@index([userId])
 }

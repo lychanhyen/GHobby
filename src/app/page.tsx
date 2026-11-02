@@ -15,7 +15,9 @@ import {
   Truck,
 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
+import StarRating from "@/components/StarRating";
 import { getCategories, getProductPurchaseCounts, getProducts } from "@/lib/products";
+import { getProductReviewSummaries, type ProductRatingSummary } from "@/lib/reviews";
 import { getStoreSettings } from "@/lib/settings";
 import { formatCurrencyVND } from "@/lib/utils";
 
@@ -34,6 +36,7 @@ export default async function HomePage() {
   let categories: any[] = [];
   let allProducts: any[] = [];
   let purchaseCounts: Record<string, number> = {};
+  let ratingSummaries: Record<string, ProductRatingSummary> = {};
   try {
     [categories, allProducts, purchaseCounts] = await Promise.all([
       getCategories(),
@@ -45,6 +48,7 @@ export default async function HomePage() {
     allProducts = [];
     purchaseCounts = {};
   }
+  ratingSummaries = await getProductReviewSummaries(allProducts.map((p) => p.id));
 
   const inStockProducts = allProducts.filter((p) => p.productType === "IN_STOCK");
   const preOrderProducts = allProducts.filter((p) => p.productType === "PRE_ORDER");
@@ -52,6 +56,8 @@ export default async function HomePage() {
   // Ảnh hero mặc định: ưu tiên pre-order 1, 2, 3...; nếu không có pre-order thì lấy
   // sản phẩm bán chạy theo lượt mua. Chỉ có 1 pre-order: ảnh phụ là sản phẩm bán chạy.
   const purchaseCount = (product: any) => purchaseCounts[product.id] || 0;
+  const ratingSummary = (product: any): ProductRatingSummary =>
+    ratingSummaries[product.id] || { average: 0, total: 0 };
   const preOrderWithImages = preOrderProducts.filter((p) => p.imageUrl);
   const bestSellers = allProducts
     .filter((p) => p.imageUrl)
@@ -61,6 +67,9 @@ export default async function HomePage() {
     preOrderWithImages.length >= 2
       ? preOrderWithImages[1]
       : bestSellers.find((p) => p.id !== featured?.id) || null;
+  const featuredRating = featured
+    ? ratingSummary(featured)
+    : { average: 0, total: 0 };
   const zaloHref = `https://zalo.me/${(settings.shopHotline || "").replace(/\D/g, "")}`;
   const expressRadiusKm = Number(settings.expressRadiusKm) || 3;
   const brandTagline = settings.brandTagline || "Gunpla & Figure";
@@ -141,6 +150,25 @@ export default async function HomePage() {
                       <p className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-white">
                         {featured.name}
                       </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-100">
+                        <span className="inline-flex items-center gap-1">
+                          <StarRating value={featuredRating.average} size="sm" />
+                          <span className="font-bold text-white">
+                            {featuredRating.total > 0
+                              ? featuredRating.average.toFixed(1)
+                              : "Chưa có đánh giá"}
+                          </span>
+                          {featuredRating.total > 0 && (
+                            <span>({featuredRating.total})</span>
+                          )}
+                        </span>
+                        <span className="text-white/40">·</span>
+                        <span>
+                          {purchaseCount(featured) > 0
+                            ? `Đã bán ${purchaseCount(featured)}`
+                            : "Chưa có lượt mua"}
+                        </span>
+                      </div>
                       <p className="mt-1.5 text-sm font-bold text-white">
                         {formatCurrencyVND(featured.sellingPrice)}
                       </p>
@@ -290,7 +318,13 @@ export default async function HomePage() {
         {inStockProducts.length > 0 ? (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
             {inStockProducts.map((product, idx) => (
-              <ProductCard key={product.id} product={product} priority={idx < 2} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                priority={idx < 2}
+                purchaseCount={purchaseCount(product)}
+                ratingSummary={ratingSummary(product)}
+              />
             ))}
           </div>
         ) : (
@@ -328,7 +362,12 @@ export default async function HomePage() {
 
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
               {preOrderProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  purchaseCount={purchaseCount(product)}
+                  ratingSummary={ratingSummary(product)}
+                />
               ))}
             </div>
           </div>

@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Product } from "@/types/product";
 import { formatCurrencyVND } from "@/lib/utils";
+import type { ProductRatingSummary } from "@/lib/reviews";
+import StarRating from "./StarRating";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { Heart, ShoppingCart } from "lucide-react";
@@ -12,9 +14,16 @@ import { Heart, ShoppingCart } from "lucide-react";
 interface ProductCardProps {
   product: Product;
   priority?: boolean;
+  purchaseCount?: number;
+  ratingSummary?: ProductRatingSummary;
 }
 
-export default function ProductCard({ product, priority = false }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  priority = false,
+  purchaseCount,
+  ratingSummary,
+}: ProductCardProps) {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -120,6 +129,40 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         <p className="mt-1 line-clamp-1 text-[11px] text-ink-500 sm:text-xs">
           {product.series}
         </p>
+
+        {(ratingSummary || typeof purchaseCount === "number") && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] text-ink-500 sm:text-[11px]">
+            {ratingSummary && (
+              <span className="inline-flex items-center gap-1">
+                <StarRating value={ratingSummary.average} size="sm" />
+                {ratingSummary.total > 0 ? (
+                  <>
+                    <span className="font-bold text-ink-900">
+                      {ratingSummary.average.toFixed(1)}
+                    </span>
+                    <span>({ratingSummary.total})</span>
+                  </>
+                ) : (
+                  <span>Chưa có đánh giá</span>
+                )}
+              </span>
+            )}
+            {ratingSummary && typeof purchaseCount === "number" && (
+              <span className="text-ink-300">·</span>
+            )}
+            {typeof purchaseCount === "number" && (
+              <span>
+                {purchaseCount > 0 ? (
+                  <>
+                    Đã bán <b className="font-bold text-ink-900">{purchaseCount}</b>
+                  </>
+                ) : (
+                  "Chưa bán"
+                )}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="mt-auto flex items-end justify-between gap-2 pt-3">
           <div className="min-w-0">
