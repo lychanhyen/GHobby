@@ -2,31 +2,47 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, X } from "lucide-react";
+import ProductImageUploader from "@/components/admin/ProductImageUploader";
+
+interface ProductFormState {
+  sku: string;
+  name: string;
+  categoryId: string;
+  brand: string;
+  scale: string;
+  series: string;
+  sellingPrice: number;
+  stockQuantity: number;
+  productType: string;
+  expectedReleaseDate: string;
+  preOrderLimit: number;
+  description: string;
+  isActive: boolean;
+}
+
+const INITIAL_FORM: ProductFormState = {
+  sku: "",
+  name: "",
+  categoryId: "",
+  brand: "",
+  scale: "",
+  series: "",
+  sellingPrice: 0,
+  stockQuantity: 0,
+  productType: "IN_STOCK",
+  expectedReleaseDate: "",
+  preOrderLimit: 0,
+  description: "",
+  isActive: true,
+};
 
 export default function CreateProductPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [formData, setFormData] = useState({
-    sku: "",
-    name: "",
-    categoryId: "",
-    brand: "",
-    scale: "",
-    series: "",
-    costPrice: 0,
-    sellingPrice: 0,
-    stockQuantity: 0,
-    minStockAlert: 2,
-    productType: "IN_STOCK",
-    expectedReleaseDate: "",
-    preOrderLimit: 0,
-    imageUrl: "",
-    description: "",
-    isActive: true,
-  });
+  const [images, setImages] = useState<string[]>([]);
+  const [formData, setFormData] = useState<ProductFormState>(INITIAL_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -35,8 +51,8 @@ export default function CreateProductPage() {
   const fetchCategories = async () => {
     try {
       const res = await fetch("/api/admin/categories");
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (data?.success) {
         setCategories(data.data);
       }
     } catch (error) {
@@ -44,52 +60,37 @@ export default function CreateProductPage() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    const formDataUpload = new FormData();
-    formDataUpload.append("file", file);
-
-    try {
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formDataUpload,
-      });
-      const data = await res.json();
-      if (data.success) {
-        setFormData({ ...formData, imageUrl: data.data.url });
-      } else {
-        alert(data.message);
-      }
-    } catch (error) {
-      alert("Lỗi khi tải ảnh lên");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    if (images.length === 0) {
+      setFormError("Vui lòng tải lên ít nhất một ảnh sản phẩm");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/admin/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          imageUrl: images[0],
+          images,
+        }),
       });
 
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
         alert("Tạo sản phẩm thành công");
         router.push("/admin/san-pham");
       } else {
-        alert(data.message);
+        setFormError(data?.message || "Tạo sản phẩm thất bại, vui lòng thử lại");
       }
-    } catch (error) {
-      alert("Có lỗi xảy ra");
+    } catch {
+      setFormError("Không thể kết nối tới máy chủ. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -211,39 +212,12 @@ export default function CreateProductPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Giá vốn (VNĐ)</label>
-                <input
-                  type="number"
-                  value={formData.costPrice}
-                  onChange={(e) => setFormData({ ...formData, costPrice: parseInt(e.target.value) || 0 })}
-                  className="input"
-                />
-              </div>
-              <div>
                 <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Tiền cọc 10%</label>
                 <input
                   type="text"
                   value={depositAmount.toLocaleString("vi-VN") + " VNĐ"}
                   disabled
                   className="input bg-ink-50 text-ink-500"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Số lượng tồn kho</label>
-                <input
-                  type="number"
-                  value={formData.stockQuantity}
-                  onChange={(e) => setFormData({ ...formData, stockQuantity: parseInt(e.target.value) || 0 })}
-                  className="input"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Ngưỡng cảnh báo</label>
-                <input
-                  type="number"
-                  value={formData.minStockAlert}
-                  onChange={(e) => setFormData({ ...formData, minStockAlert: parseInt(e.target.value) || 2 })}
-                  className="input"
                 />
               </div>
               <div>
@@ -256,6 +230,15 @@ export default function CreateProductPage() {
                   <option value="IN_STOCK">Có sẵn</option>
                   <option value="PRE_ORDER">Pre-order</option>
                 </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Số lượng tồn kho</label>
+                <input
+                  type="number"
+                  value={formData.stockQuantity}
+                  onChange={(e) => setFormData({ ...formData, stockQuantity: parseInt(e.target.value) || 0 })}
+                  className="input"
+                />
               </div>
             </div>
 
@@ -288,45 +271,18 @@ export default function CreateProductPage() {
           </div>
         </div>
 
-        {/* Image Upload */}
+        {/* Images */}
         <div className="card">
           <div className="border-b border-ink-200 px-5 py-4">
-            <h2 className="text-sm font-bold text-ink-900">Ảnh sản phẩm</h2>
+            <h2 className="text-sm font-bold text-ink-900">
+              Ảnh sản phẩm <span className="text-accent-600">*</span>
+            </h2>
+            <p className="mt-1 text-xs text-ink-500">
+              Ảnh đầu tiên là ảnh chính. Bấm vào ảnh con để đặt làm ảnh chính.
+            </p>
           </div>
-          <div className="space-y-4 p-5">
-            {formData.imageUrl ? (
-              <div className="relative h-48 w-48">
-                <img
-                  src={formData.imageUrl}
-                  alt="Product"
-                  className="h-full w-full rounded-lg border border-ink-200 object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, imageUrl: "" })}
-                  className="absolute -right-2 -top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-ink-950 text-white transition-colors hover:bg-accent-600"
-                  aria-label="Xóa ảnh sản phẩm"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <label className="flex h-48 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-ink-300 transition-colors hover:border-ink-400 hover:bg-ink-50">
-                <Upload className="mb-3 h-9 w-9 text-ink-400" strokeWidth={1.5} />
-                <p className="text-sm text-ink-500">
-                  <span className="font-bold text-ink-900">Nhấn để tải lên</span> hoặc kéo thả
-                </p>
-                <p className="mt-1 text-xs text-ink-400">PNG, JPG, WebP (Tối đa 5MB)</p>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                />
-              </label>
-            )}
-            {uploading && <p className="text-sm text-ink-500">Đang xử lý ảnh...</p>}
+          <div className="p-5">
+            <ProductImageUploader images={images} onChange={setImages} max={10} />
           </div>
         </div>
 
@@ -349,18 +305,23 @@ export default function CreateProductPage() {
           </div>
         </div>
 
+        {formError && (
+          <p
+            role="alert"
+            className="rounded-md border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-800"
+          >
+            {formError}
+          </p>
+        )}
+
         {/* Actions */}
         <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="btn-outline"
-          >
+          <button type="button" onClick={() => router.back()} className="btn-outline">
             Hủy
           </button>
           <button
             type="submit"
-            disabled={loading || uploading || !formData.imageUrl}
+            disabled={loading}
             className="btn-primary"
           >
             {loading ? "Đang tạo..." : "Tạo sản phẩm"}

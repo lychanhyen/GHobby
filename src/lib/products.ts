@@ -110,6 +110,7 @@ export async function getProducts(options?: {
         preOrderLimit: p.preOrderLimit,
         preOrderCount: p.preOrderCount,
         imageUrl: p.imageUrl,
+        images: p.images ?? [],
         description: p.description,
         isActive: p.isActive,
       }));
@@ -234,6 +235,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
         preOrderLimit: product.preOrderLimit,
         preOrderCount: product.preOrderCount,
         imageUrl: product.imageUrl,
+        images: product.images ?? [],
         description: product.description,
         isActive: product.isActive,
       };

@@ -19,6 +19,7 @@ import StarRating from "@/components/StarRating";
 import { getCategories, getProductPurchaseCounts, getProducts } from "@/lib/products";
 import { getProductReviewSummaries, type ProductRatingSummary } from "@/lib/reviews";
 import { getStoreSettings } from "@/lib/settings";
+import { resolveHeroSlots } from "@/lib/hero";
 import { formatCurrencyVND } from "@/lib/utils";
 
 export default async function HomePage() {
@@ -53,23 +54,29 @@ export default async function HomePage() {
   const inStockProducts = allProducts.filter((p) => p.productType === "IN_STOCK");
   const preOrderProducts = allProducts.filter((p) => p.productType === "PRE_ORDER");
 
-  // Ảnh hero mặc định: ưu tiên pre-order 1, 2, 3...; nếu không có pre-order thì lấy
-  // sản phẩm bán chạy theo lượt mua. Chỉ có 1 pre-order: ảnh phụ là sản phẩm bán chạy.
   const purchaseCount = (product: any) => purchaseCounts[product.id] || 0;
   const ratingSummary = (product: any): ProductRatingSummary =>
     ratingSummaries[product.id] || { average: 0, total: 0 };
-  const preOrderWithImages = preOrderProducts.filter((p) => p.imageUrl);
-  const bestSellers = allProducts
-    .filter((p) => p.imageUrl)
-    .sort((a, b) => purchaseCount(b) - purchaseCount(a));
-  const featured = preOrderWithImages[0] || bestSellers[0] || null;
-  const secondary =
-    preOrderWithImages.length >= 2
-      ? preOrderWithImages[1]
-      : bestSellers.find((p) => p.id !== featured?.id) || null;
+
+  // 3 ô hero: admin có thể chỉ định sản phẩm cụ thể cho từng ô
+  // (Cấu hình > Giao diện trang chủ > 3 ô ảnh hero).
+  const [heroSlot1, heroSlot2, heroSlot3] = resolveHeroSlots(
+    allProducts,
+    settings.heroSlots,
+    purchaseCounts,
+    [
+      (settings.heroImageUrl || "").trim(),
+      (settings.heroSecondaryImageUrl || "").trim(),
+    ]
+  );
+  const featured = heroSlot1.product;
+  const secondary = heroSlot2.product;
   const featuredRating = featured
     ? ratingSummary(featured)
     : { average: 0, total: 0 };
+  const featuredIsPreOrder = featured?.productType === "PRE_ORDER";
+  const secondaryIsPreOrder = secondary?.productType === "PRE_ORDER";
+
   const zaloHref = `https://zalo.me/${(settings.shopHotline || "").replace(/\D/g, "")}`;
   const expressRadiusKm = Number(settings.expressRadiusKm) || 3;
   const brandTagline = settings.brandTagline || "Gunpla & Figure";
@@ -77,14 +84,19 @@ export default async function HomePage() {
     Array.isArray(settings.heroBadges) && settings.heroBadges.length > 0
       ? settings.heroBadges
       : ["HG · RG · MG · PG", "Cọc 10%", "Đóng gói 5 lớp"];
-  const heroImageUrl = (settings.heroImageUrl || "").trim();
-  const heroSecondaryImageUrl = (settings.heroSecondaryImageUrl || "").trim();
-  const featuredImage = heroImageUrl || featured?.imageUrl;
-  const secondaryImage = heroSecondaryImageUrl || secondary?.imageUrl;
   // Ô hỏa tốc dùng ảnh sản phẩm khác với 2 ảnh hero để không bị lặp hình
-  const expressProduct =
-    bestSellers.find((p) => p.id !== featured?.id && p.id !== secondary?.id) || null;
-  const expressImage = expressProduct?.imageUrl || secondaryImage || featuredImage;
+  const expressProduct = heroSlot3.product;
+  const expressImage = heroSlot3.image || heroSlot2.image || heroSlot1.image;
+
+  // Badge "Pre-order" chỉ gắn khi ô hero thực sự hiển thị sản phẩm pre-order.
+  const PreOrderTag = ({ position = "left-3 top-3" }: { position?: string }) => (
+    <span
+      className={`pointer-events-none absolute ${position} z-10 inline-flex items-center gap-1 rounded-sm bg-amber-100/95 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-900 backdrop-blur-sm`}
+    >
+      <Clock className="h-3 w-3" />
+      Pre-order
+    </span>
+  );
 
   return (
     <div className="pb-20">
@@ -129,20 +141,29 @@ export default async function HomePage() {
 
           <div className="lg:col-span-6">
             <div className="grid h-[300px] grid-cols-5 grid-rows-6 gap-2.5 sm:h-[400px] sm:gap-3 lg:h-[440px]">
-              {featuredImage ? (
+              {heroSlot1.image ? (
                 <Link
-                  href={heroImageUrl ? "#hang-co-san" : `/san-pham/${featured.slug}`}
+                  href={
+                    heroSlot1.usesCustomImage || !featured
+                      ? "#hang-co-san"
+                      : `/san-pham/${featured.slug}`
+                  }
                   className="group relative col-span-3 row-span-6 overflow-hidden rounded-lg border border-ink-200 bg-white"
                 >
                   <Image
-                    src={featuredImage}
-                    alt={heroImageUrl ? "Ảnh hero cửa hàng" : featured.name}
+                    src={heroSlot1.image}
+                    alt={
+                      heroSlot1.usesCustomImage || !featured
+                        ? "Ảnh hero cửa hàng"
+                        : featured.name
+                    }
                     fill
                     priority
                     sizes="(max-width: 1024px) 60vw, 30vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
-                  {!heroImageUrl && featured && (
+                  {featuredIsPreOrder && !heroSlot1.usesCustomImage && <PreOrderTag />}
+                  {!heroSlot1.usesCustomImage && featured && (
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-950/90 via-ink-950/35 to-transparent p-4 pt-12">
                       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-200">
                         {featured.brand}
@@ -181,18 +202,29 @@ export default async function HomePage() {
                 </div>
               )}
 
-              {secondaryImage ? (
+              {heroSlot2.image ? (
                 <Link
-                  href={heroSecondaryImageUrl ? "#hang-co-san" : `/san-pham/${secondary.slug}`}
+                  href={
+                    heroSlot2.usesCustomImage || !secondary
+                      ? "#hang-co-san"
+                      : `/san-pham/${secondary.slug}`
+                  }
                   className="group relative col-span-2 row-span-3 overflow-hidden rounded-lg border border-ink-200 bg-white"
                 >
                   <Image
-                    src={secondaryImage}
-                    alt={heroSecondaryImageUrl ? "Ảnh hero phụ" : secondary.name}
+                    src={heroSlot2.image}
+                    alt={
+                      heroSlot2.usesCustomImage || !secondary
+                        ? "Ảnh hero phụ"
+                        : secondary.name
+                    }
                     fill
                     sizes="(max-width: 1024px) 40vw, 20vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
+                  {secondaryIsPreOrder && !heroSlot2.usesCustomImage && (
+                    <PreOrderTag position="left-2 top-2" />
+                  )}
                 </Link>
               ) : (
                 <div className="col-span-2 row-span-3 rounded-lg bg-ink-200" />

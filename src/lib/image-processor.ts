@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 
 export async function processImage(buffer: Buffer): Promise<Buffer> {
   return sharp(buffer)
@@ -12,9 +12,13 @@ export async function processImage(buffer: Buffer): Promise<Buffer> {
     .toBuffer();
 }
 
-export function generateImageFileName(originalName: string): string {
-  const ext = ".webp";
-  return `${uuidv4()}${ext}`;
+/**
+ * Sinh tên file duy nhất cho ảnh tải lên.
+ * Dùng crypto.randomUUID() của Node để không phụ thuộc package ESM (`uuid`),
+ * tránh lỗi require/ESM khi chạy route handler ở các môi trường khác nhau.
+ */
+export function generateImageFileName(_originalName?: string): string {
+  return `${randomUUID()}.webp`;
 }
 
 export function getPublicUrl(bucket: string, path: string): string {

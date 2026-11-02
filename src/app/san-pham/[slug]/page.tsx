@@ -1,10 +1,10 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, MessageCircle } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
 import ProductCard from "@/components/ProductCard";
+import ProductImageGallery from "@/components/ProductImageGallery";
 import ProductPurchaseActions from "@/components/ProductPurchaseActions";
 import ProductReviewsSection from "@/components/ProductReviewsSection";
 import StarRating from "@/components/StarRating";
@@ -119,35 +119,36 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12">
           {/* Col 1: Product Image */}
           <div className="self-start lg:sticky lg:top-24">
-            <div className="relative aspect-square overflow-hidden rounded-lg border border-ink-200 bg-ink-50">
-              <Image
-                src={product.imageUrl}
-                alt={`Mô hình ${product.name} - ${product.scale} chính hãng ${product.brand}`}
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-              />
-
-              {/* Status Badges */}
-              <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-                {isPreOrder && (
-                  <span className="rounded-sm bg-amber-100/95 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-900 backdrop-blur-sm">
-                    Hàng pre-order · Cọc 10%
-                  </span>
-                )}
-                {isOutOfStock && (
-                  <span className="rounded-sm bg-ink-950/90 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white backdrop-blur-sm">
-                    Tạm hết hàng
-                  </span>
-                )}
-                {!isOutOfStock && !isPreOrder && (
-                  <span className="rounded-sm bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700 backdrop-blur-sm">
-                    Còn hàng trong kho ({product.stockQuantity} hộp)
-                  </span>
-                )}
-              </div>
-            </div>
+            <ProductImageGallery
+              images={
+                product.images && product.images.length > 0
+                  ? product.images
+                  : [product.imageUrl]
+              }
+              alt={`Mô hình ${product.name} - ${product.scale} chính hãng ${product.brand}`}
+              overlay={
+                <>
+                  {/* Status Badges */}
+                  <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+                    {isPreOrder && (
+                      <span className="rounded-sm bg-amber-100/95 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-900 backdrop-blur-sm">
+                        Hàng pre-order · Cọc 10%
+                      </span>
+                    )}
+                    {isOutOfStock && (
+                      <span className="rounded-sm bg-ink-950/90 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white backdrop-blur-sm">
+                        Tạm hết hàng
+                      </span>
+                    )}
+                    {!isOutOfStock && !isPreOrder && (
+                      <span className="rounded-sm bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700 backdrop-blur-sm">
+                        Còn hàng trong kho ({product.stockQuantity} hộp)
+                      </span>
+                    )}
+                  </div>
+                </>
+              }
+            />
 
             {/* Packaging Guarantee Note */}
             <div className="mt-4 border-l-2 border-accent-600 bg-ink-50 px-4 py-3.5">

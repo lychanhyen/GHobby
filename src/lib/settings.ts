@@ -1,5 +1,25 @@
-import { StoreSettings } from "@/types/product";
+import { HeroSlotConfig, HeroSlotMode, StoreSettings } from "@/types/product";
 import { prisma } from "@/lib/prisma";
+
+const HERO_SLOT_MODES: HeroSlotMode[] = ["auto", "preorder", "featured"];
+
+export const DEFAULT_HERO_SLOTS: HeroSlotConfig[] = [
+  { mode: "auto", productId: "" },
+  { mode: "auto", productId: "" },
+  { mode: "auto", productId: "" },
+];
+
+/** Chuẩn hoá cấu hình 3 ô hero (luôn đủ 3 phần tử, mode hợp lệ). */
+export function normalizeHeroSlots(input: unknown): HeroSlotConfig[] {
+  return [0, 1, 2].map((index) => {
+    const raw = Array.isArray(input) ? (input[index] as any) : null;
+    if (!raw || typeof raw !== "object") return { ...DEFAULT_HERO_SLOTS[index] };
+    const mode: HeroSlotMode = HERO_SLOT_MODES.includes(raw.mode) ? raw.mode : "auto";
+    const productId = typeof raw.productId === "string" ? raw.productId.trim() : "";
+    return { mode, productId };
+  });
+}
+
 
 const DEFAULT_SETTINGS: StoreSettings = {
   shopName: process.env.NEXT_PUBLIC_SHOP_NAME || "GHobby Model Kit Shop",
@@ -24,6 +44,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   heroBadges: ["HG · RG · MG · PG", "Cọc 10%", "Đóng gói 5 lớp"],
   heroImageUrl: "",
   heroSecondaryImageUrl: "",
+  heroSlots: DEFAULT_HERO_SLOTS.map((slot) => ({ ...slot })),
   headerCategoryIds: [],
   headerCategoryLimit: 6,
 };
@@ -71,6 +92,9 @@ export async function getStoreSettings(): Promise<StoreSettings> {
           if (typeof parsed.heroImageUrl === "string") merged.heroImageUrl = parsed.heroImageUrl;
           if (typeof parsed.heroSecondaryImageUrl === "string") {
             merged.heroSecondaryImageUrl = parsed.heroSecondaryImageUrl;
+          }
+          if (parsed.heroSlots !== undefined) {
+            merged.heroSlots = normalizeHeroSlots(parsed.heroSlots);
           }
         } else if (setting.key === "header_config") {
           if (Array.isArray(parsed.categoryIds)) {

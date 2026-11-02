@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireStaff } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { normalizeProductImages } from "@/lib/product-images";
 
 export async function GET(req: NextRequest) {
   try {
@@ -91,7 +92,6 @@ export async function POST(req: NextRequest) {
       brand,
       scale,
       series,
-      costPrice,
       sellingPrice,
       stockQuantity,
       minStockAlert,
@@ -99,12 +99,25 @@ export async function POST(req: NextRequest) {
       expectedReleaseDate,
       preOrderLimit,
       imageUrl,
+      images: rawImages,
       description,
       isActive,
     } = body;
 
-    if (!sku || !name || !categoryId || !sellingPrice || !imageUrl || !description) {
-      return NextResponse.json({ success: false, message: "Vui lòng điền đầy đủ thông tin bắt buộc" }, { status: 400 });
+    // Ảnh: phần tử đầu tiên trong `images` là ảnh chính; tương thích `imageUrl` cũ.
+    const images = normalizeProductImages(rawImages, imageUrl);
+    const mainImageUrl = images[0] || "";
+
+    if (!sku || !name || !categoryId || !sellingPrice || !mainImageUrl || !description) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: mainImageUrl
+            ? "Vui lòng điền đầy đủ thông tin bắt buộc"
+            : "Vui lòng tải lên ít nhất một ảnh sản phẩm",
+        },
+        { status: 400 }
+      );
     }
 
     const slug = slugify(name);
@@ -129,7 +142,9 @@ export async function POST(req: NextRequest) {
         brand: brand || "",
         scale: scale || "",
         series: series || "",
-        costPrice: parseInt(costPrice) || 0,
+        // Giá vốn không nhập ở form sản phẩm (giá biến động). Giá vốn thực tế
+        // được cập nhật mỗi lần nhập kho từ trang Kho hàng.
+        costPrice: Math.max(0, parseInt(String(body.costPrice)) || 0),
         sellingPrice: parseInt(sellingPrice),
         stockQuantity: parseInt(stockQuantity) || 0,
         minStockAlert: parseInt(minStockAlert) || 2,
@@ -137,7 +152,8 @@ export async function POST(req: NextRequest) {
         expectedReleaseDate: expectedReleaseDate ? new Date(expectedReleaseDate) : null,
         preOrderLimit: parseInt(preOrderLimit) || 0,
         preOrderCount: 0,
-        imageUrl,
+        imageUrl: mainImageUrl,
+        images,
         description,
         isActive: isActive !== undefined ? isActive : true,
       },

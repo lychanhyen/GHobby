@@ -9,7 +9,7 @@ import type { ProductRatingSummary } from "@/lib/reviews";
 import StarRating from "./StarRating";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Heart, ImageOff, ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -27,12 +27,9 @@ export default function ProductCard({
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useWishlist();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [imageError, setImageError] = useState(false);
   const isOutOfStock = product.productType === "IN_STOCK" && product.stockQuantity <= 0;
   const isPreOrder = product.productType === "PRE_ORDER";
-  const isLowStock =
-    product.productType === "IN_STOCK" &&
-    product.stockQuantity > 0 &&
-    product.stockQuantity <= product.minStockAlert;
   const favorite = isFavorite(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -60,15 +57,22 @@ export default function ProductCard({
         prefetch={true}
         className="relative block aspect-square w-full overflow-hidden bg-ink-50"
       >
-        <Image
-          src={product.imageUrl}
-          alt={`Mô hình ${product.name} - ${product.scale} chính hãng ${product.brand}`}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          priority={priority}
-          loading={priority ? undefined : "lazy"}
-        />
+        {imageError ? (
+          <div className="flex h-full w-full items-center justify-center bg-ink-50 text-ink-300">
+            <ImageOff className="h-8 w-8" strokeWidth={1.5} />
+          </div>
+        ) : (
+          <Image
+            src={product.imageUrl}
+            alt={`Mô hình ${product.name} - ${product.scale} chính hãng ${product.brand}`}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
+            onError={() => setImageError(true)}
+          />
+        )}
 
         <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
           {isPreOrder && (
@@ -79,11 +83,6 @@ export default function ProductCard({
           {isOutOfStock && (
             <span className="rounded-sm bg-ink-950/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
               Hết hàng
-            </span>
-          )}
-          {isLowStock && !isOutOfStock && (
-            <span className="rounded-sm bg-white/95 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-700 backdrop-blur-sm">
-              Còn {product.stockQuantity}
             </span>
           )}
         </div>

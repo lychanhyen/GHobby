@@ -145,7 +145,8 @@ model Product {
   expectedReleaseDate DateTime?      // Kiểu ngày thực tế cho hàng Pre-order
   preOrderLimit       Int            @default(0) // Giới hạn tối đa số suất cho phép đặt trước
   preOrderCount       Int            @default(0) // Số suất khách đã cọc thành công
-  imageUrl            String         // URL ảnh công khai trên Supabase Storage
+  imageUrl            String         // URL ảnh chính (trùng với images[0] nếu có)
+  images              String[]       @default([]) // Thư viện ảnh: phần tử đầu tiên là ảnh chính
   description         String
   isActive            Boolean        @default(true) // Ẩn / Hiện (Soft delete)
   orderItems          OrderItem[]
@@ -293,4 +294,18 @@ model Review {
   @@unique([userId, productId]) // Mỗi khách chỉ đánh giá 1 lần / sản phẩm
   @@index([productId, createdAt])
   @@index([userId])
+}
+
+// 12. Ảnh tải lên được lưu trong DB (nguồn dự phòng bền vững khi filesystem chỉ đọc,
+//     ví dụ khi triển khai trên Vercel). Route /uploads/[...path] sẽ đọc ảnh từ đây
+//     nếu file không có trên đĩa.
+model UploadedImage {
+  id        String   @id @default(uuid())
+  fileName  String   @unique // ví dụ: 4e6d6f58-....webp
+  mimeType  String   @default("image/webp")
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([fileName])
 }

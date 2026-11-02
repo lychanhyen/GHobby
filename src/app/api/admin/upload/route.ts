@@ -1,105 +1,79 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { requireStaff } from "@/lib/auth";
-import { supabaseAdmin } from "@/lib/supabase";
-import { processImage, generateImageFileName, getPublicUrl } from "@/lib/image-processor";
+import { handleUploadedImages } from "@/lib/upload-service";
 
-const BUCKET_NAME = "product-images";
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+// Ảnh phải dùng filesystem / Node APIs -> luôn chạy Node runtime.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-function hasSupabaseStorage(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  return Boolean(url && (key.startsWith("eyJ") || key.startsWith("sb_secret_")));
-}
-
-async function saveToLocalStorage(buffer: Buffer, fileName: string): Promise<string> {
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), buffer);
-  return `/uploads/${fileName}`;
-}
+const MAX_FILES_PER_REQUEST = 10;
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
     const sessionData = await requireStaff();
     if (!sessionData) {
       return NextResponse.json({ success: false, message: "Không có quyền truy cập" }, { status: 403 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
-
-    if (!file) {
-      return NextResponse.json({ success: false, message: "Không có file được tải lên" }, { status: 400 });
-    }
-
-    // Validate file type
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch {
       return NextResponse.json(
-        { success: false, message: "Chỉ chấp nhận file ảnh (JPEG, PNG, WebP)" },
+        { success: false, message: "Không đọc được dữ liệu tải lên" },
         { status: 400 }
       );
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ success: false, message: "File không được vượt quá 5MB" }, { status: 400 });
+    // Hỗ trợ cả 1 file (`file`) và nhiều file (`files`) nhưng giới hạn tổng số.
+    const files = [
+      ...formData.getAll("files"),
+      ...formData.getAll("file"),
+    ].filter((item): item is File => item instanceof File);
+
+    if (files.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "Không có file được tải lên" },
+        { status: 400 }
+      );
+    }
+    if (files.length > MAX_FILES_PER_REQUEST) {
+      return NextResponse.json(
+        { success: false, message: `Mỗi lần chỉ được tải lên tối đa ${MAX_FILES_PER_REQUEST} ảnh` },
+        { status: 400 }
+      );
     }
 
-    // Read file buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const { uploaded, failures } = await handleUploadedImages(files, MAX_FILES_PER_REQUEST);
 
-    // Process image with Sharp
-    const processedBuffer = await processImage(buffer);
-
-    // Generate filename
-    const fileName = generateImageFileName(file.name);
-    const filePath = `${fileName}`;
-
-    // Fallback to local storage when Supabase Storage is not configured (e.g. local dev)
-    if (!hasSupabaseStorage()) {
-      const localUrl = await saveToLocalStorage(processedBuffer, fileName);
-      return NextResponse.json({
-        success: true,
-        message: "Tải lên ảnh thành công",
-        data: { url: localUrl, path: filePath },
-      });
+    if (uploaded.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: failures[0]?.message || "Tải ảnh thất bại, vui lòng thử lại",
+          failures,
+        },
+        { status: 400 }
+      );
     }
 
-    // Upload to Supabase Storage
-    try {
-      const { error } = await supabaseAdmin.storage
-        .from(BUCKET_NAME)
-        .upload(filePath, processedBuffer, {
-          contentType: "image/webp",
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (error) throw error;
-
-      const publicUrl = getPublicUrl(BUCKET_NAME, filePath);
-      return NextResponse.json({
-        success: true,
-        message: "Tải lên ảnh thành công",
-        data: { url: publicUrl, path: filePath },
-      });
-    } catch (error) {
-      console.error("Supabase upload error, falling back to local storage:", error);
-      const localUrl = await saveToLocalStorage(processedBuffer, fileName);
-      return NextResponse.json({
-        success: true,
-        message: "Tải lên ảnh thành công",
-        data: { url: localUrl, path: filePath },
-      });
-    }
-  } catch (error) {
+    return NextResponse.json({
+      success: true,
+      message: "Tải lên ảnh thành công",
+      data: {
+        // Giữ các khoá cũ để client đang dùng `data.url` không bị vỡ.
+        url: uploaded[0].url,
+        path: uploaded[0].path,
+        urls: uploaded.map((item) => item.url),
+        files: uploaded,
+      },
+      failures: failures.length > 0 ? failures : undefined,
+    });
+  } catch (error: any) {
     console.error("Upload error:", error);
-    return NextResponse.json({ success: false, message: "Có lỗi xảy ra" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Có lỗi xảy ra khi tải ảnh. Vui lòng thử lại." },
+      { status: 500 }
+    );
   }
 }

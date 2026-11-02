@@ -38,7 +38,6 @@ export default async function StatisticsPage() {
         sku: true,
         name: true,
         stockQuantity: true,
-        minStockAlert: true,
       },
       orderBy: { stockQuantity: "asc" },
     }),
@@ -57,9 +56,8 @@ export default async function StatisticsPage() {
     0
   );
 
-  const lowStock = lowStockProducts.filter(
-    (p) => p.stockQuantity <= p.minStockAlert
-  );
+  // Cảnh báo tồn kho: sản phẩm còn từ 5 hộp trở xuống.
+  const lowStock = lowStockProducts.filter((p) => p.stockQuantity <= 5);
 
   const chartData = completedOrders.reduce<Record<string, number>>((acc, o) => {
     const m = new Date(o.createdAt || Date.now()).toLocaleString("vi-VN", { month: "short", year: "numeric" });
@@ -164,7 +162,6 @@ export default async function StatisticsPage() {
                   <th className="px-4 py-3 text-left">SKU</th>
                   <th className="px-4 py-3 text-left">Tên sản phẩm</th>
                   <th className="px-4 py-3 text-left">Tồn kho</th>
-                  <th className="px-4 py-3 text-left">Ngưỡng cảnh báo</th>
                   <th className="px-4 py-3 text-left">Trạng thái</th>
                 </tr>
               </thead>
@@ -186,7 +183,7 @@ export default async function StatisticsPage() {
                         {product.stockQuantity}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-sm text-ink-600">{product.minStockAlert}</td>
+                    <td className="px-4 py-3.5 text-sm text-ink-600">{product.stockQuantity}</td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-sm font-bold">
                       {product.stockQuantity === 0 ? (
                         <span className="text-accent-700">Hết hàng</span>

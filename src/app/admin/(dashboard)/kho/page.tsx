@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Package, AlertTriangle, Plus, History, Edit, FileText, Upload, X } from "lucide-react";
+import { formatCurrencyVND } from "@/lib/utils";
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -182,7 +183,7 @@ export default function InventoryPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setNotice({ type: "error", text: data.message || "Không thể cập nhật kho" });
+        setNotice({ type: "success", text: data.message || "Nhập kho thành công" });
         setShowBulkImportModal(false);
         setBulkItems([]);
         setPasteText("");
@@ -333,12 +334,13 @@ export default function InventoryPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px]">
+            <table className="w-full min-w-[980px]">
               <thead className="border-b border-ink-200 bg-ink-50 text-[11px] font-bold uppercase tracking-wide text-ink-500">
                 <tr>
                   <th className="px-4 py-3 text-left">Sản phẩm</th>
                   <th className="px-4 py-3 text-left">SKU</th>
                   <th className="px-4 py-3 text-left">Tồn kho</th>
+                  <th className="px-4 py-3 text-left">Giá vốn TB</th>
                   <th className="px-4 py-3 text-left">Pre-order</th>
                   <th className="px-4 py-3 text-left">Trạng thái</th>
                   <th className="px-4 py-3 text-right">Thao tác</th>
@@ -363,6 +365,9 @@ export default function InventoryPage() {
                     <td className="px-4 py-3.5">
                       <span className="text-lg font-bold text-ink-950">{product.stockQuantity}</span>
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-ink-600">
+                      {formatCurrencyVND(product.costPrice || 0)}
+                    </td>
                     <td className="px-4 py-3.5 text-sm text-ink-600">{product.preOrderCount || 0}</td>
                     <td className="whitespace-nowrap px-4 py-3.5">{getStockStatus(product)}</td>
                     <td className="px-4 py-3.5">
@@ -370,7 +375,6 @@ export default function InventoryPage() {
                         <button
                           onClick={() => openImportModal(product)}
                           className="inline-flex items-center gap-1 rounded-md border border-ink-200 px-2.5 py-1.5 text-[12px] font-bold text-ink-700 transition-colors hover:border-ink-300 hover:bg-ink-50 disabled:pointer-events-none disabled:opacity-40"
-                          disabled={product.productType === "PRE_ORDER"}
                         >
                           <Plus className="h-3.5 w-3.5" />
                           <span>Nhập</span>
@@ -402,6 +406,13 @@ export default function InventoryPage() {
             </div>
             <form onSubmit={handleImport}>
               <div className="space-y-4 px-5 py-4">
+                {selectedProduct.productType === "PRE_ORDER" && (
+                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-800">
+                    Sản phẩm pre-order: số lượng nhập sẽ cộng vào tồn kho thực tế (dùng khi
+                    hàng đã về). Muốn bán ngay như hàng có sẵn, đổi loại sản phẩm sang
+                    &quot;Có sẵn&quot; ở trang chỉnh sửa sản phẩm.
+                  </p>
+                )}
                 <div>
                   <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
                     Số lượng nhập <span className="text-accent-600">*</span>
@@ -416,7 +427,9 @@ export default function InventoryPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Giá vốn (VNĐ)</label>
+                  <label className="mb-1.5 block text-[12px] font-bold text-ink-700">
+                    Giá nhập lô này (VNĐ)
+                  </label>
                   <input
                     type="number"
                     value={importData.costPrice}
@@ -424,6 +437,14 @@ export default function InventoryPage() {
                     className="input"
                     min="0"
                   />
+                  <p className="mt-1 text-[11px] leading-relaxed text-ink-500">
+                    Giá vốn bình quân hiện tại:{" "}
+                    <span className="font-bold text-ink-700">
+                      {formatCurrencyVND(selectedProduct.costPrice || 0)}
+                    </span>
+                    . Giá nhập của phiếu này được lưu riêng trong lịch sử kho; giá vốn sản
+                    phẩm = bình quân gia quyền tất cả các lần nhập.
+                  </p>
                 </div>
                 <div>
                   <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Ghi chú</label>

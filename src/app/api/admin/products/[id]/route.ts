@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { normalizeProductImages } from "@/lib/product-images";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -61,7 +62,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       brand,
       scale,
       series,
-      costPrice,
       sellingPrice,
       stockQuantity,
       minStockAlert,
@@ -69,12 +69,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       expectedReleaseDate,
       preOrderLimit,
       imageUrl,
+      images: rawImages,
       description,
       isActive,
     } = body;
 
-    if (!sku || !name || !categoryId || !sellingPrice || !imageUrl || !description) {
-      return NextResponse.json({ success: false, message: "Vui lòng điền đầy đủ thông tin bắt buộc" }, { status: 400 });
+    // Ảnh: phần tử đầu tiên là ảnh chính; giữ tương thích với `imageUrl` cũ.
+    const images = normalizeProductImages(rawImages, imageUrl);
+    const mainImageUrl = images[0] || "";
+
+    if (!sku || !name || !categoryId || !sellingPrice || !mainImageUrl || !description) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: mainImageUrl
+            ? "Vui lòng điền đầy đủ thông tin bắt buộc"
+            : "Sản phẩm cần có ít nhất một ảnh",
+        },
+        { status: 400 }
+      );
     }
 
     const slug = slugify(name);
@@ -124,14 +137,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           brand: brand || "",
           scale: scale || "",
           series: series || "",
-          costPrice: parseInt(costPrice) || 0,
+          // Chỉ cập nhật giá vốn khi client gửi lên (ví dụ phiếu nhập kho / sửa tay).
+          // Form sản phẩm không còn nhập giá vốn nên giá vốn hiện tại được giữ nguyên.
+          ...(body.costPrice !== undefined && body.costPrice !== null && body.costPrice !== ""
+            ? { costPrice: Math.max(0, parseInt(String(body.costPrice)) || 0) }
+            : {}),
           sellingPrice: parseInt(sellingPrice),
           stockQuantity: newStockQuantity,
-          minStockAlert: parseInt(minStockAlert) || 2,
+          // Ngưỡng cảnh báo không còn nhập trên form; chỉ cập nhật khi client gửi lên.
+          ...(minStockAlert !== undefined && minStockAlert !== null && minStockAlert !== ""
+            ? { minStockAlert: Math.max(1, parseInt(String(minStockAlert)) || 2) }
+            : {}),
           productType: productType || "IN_STOCK",
           expectedReleaseDate: expectedReleaseDate ? new Date(expectedReleaseDate) : null,
           preOrderLimit: parseInt(preOrderLimit) || 0,
-          imageUrl,
+          imageUrl: mainImageUrl,
+          images,
           description,
           isActive: isActive !== undefined ? isActive : true,
         },

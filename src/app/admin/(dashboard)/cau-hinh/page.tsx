@@ -15,11 +15,32 @@ import {
   Trash2,
 } from "lucide-react";
 
+type HeroSlotDraft = { mode: string; productId: string };
+
+const HERO_SLOT_MODE_VALUES = ["auto", "preorder", "featured"];
+
+const HERO_SLOT_LABELS = [
+  "Ô 1 · Ảnh lớn (chính)",
+  "Ô 2 · Ảnh phụ",
+  "Ô 3 · Nền ô hỏa tốc",
+];
+
+/** Đọc cấu hình 3 ô hero từ DB thành dữ liệu cho form (luôn đủ 3 ô). */
+const normalizeHeroSlotsForForm = (input: any): HeroSlotDraft[] =>
+  [0, 1, 2].map((index) => ({
+    mode: HERO_SLOT_MODE_VALUES.includes(input?.[index]?.mode)
+      ? input[index].mode
+      : "auto",
+    productId:
+      typeof input?.[index]?.productId === "string" ? input[index].productId : "",
+  }));
+
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [uploadingHero, setUploadingHero] = useState<"" | "heroImageUrl" | "heroSecondaryImageUrl">("");
 
   const [settings, setSettings] = useState({
@@ -51,6 +72,11 @@ export default function SettingsPage() {
       heroBadges: "HG · RG · MG · PG, Cọc 10%, Đóng gói 5 lớp",
       heroImageUrl: "",
       heroSecondaryImageUrl: "",
+      heroSlots: [
+        { mode: "auto", productId: "" },
+        { mode: "auto", productId: "" },
+        { mode: "auto", productId: "" },
+      ],
     },
     header_config: {
       categoryIds: [] as string[],
@@ -61,7 +87,20 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchSettings();
     fetchCategories();
+    fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch("/api/admin/products?limit=200");
+      const data = await res.json();
+      if (data.success) {
+        setProducts(data.data?.products || []);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -107,6 +146,9 @@ export default function SettingsPage() {
             heroImageUrl: data.data.homepage_config?.heroImageUrl || "",
             heroSecondaryImageUrl:
               data.data.homepage_config?.heroSecondaryImageUrl || "",
+            heroSlots: normalizeHeroSlotsForForm(
+              data.data.homepage_config?.heroSlots
+            ),
           },
           header_config: {
             categoryIds: Array.isArray(data.data.header_config?.categoryIds)
@@ -605,11 +647,79 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          <div className="rounded-lg border border-ink-200 p-4">
+            <p className="text-[12px] font-bold text-ink-800">3 ô ảnh hero</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-500">
+              Chọn kiểu hiển thị và sản phẩm cụ thể cho từng ô. Nếu chọn một sản phẩm cụ
+              thể, hệ thống sẽ ưu tiên sản phẩm đó thay cho kiểu tự động. Ô hero hiển thị
+              sản phẩm pre-order sẽ tự gắn tag “Pre-order”; sản phẩm nổi bật (hàng có sẵn)
+              thì không gắn tag.
+            </p>
+
+            <div className="mt-3 space-y-2.5">
+              {settings.homepage_config.heroSlots.map((slot: HeroSlotDraft, index: number) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-1 items-center gap-2 rounded-md border border-ink-100 bg-ink-50/60 p-3 sm:grid-cols-[130px_1fr_1.3fr]"
+                >
+                  <p className="text-[12px] font-bold text-ink-700">
+                    {HERO_SLOT_LABELS[index]}
+                  </p>
+                  <select
+                    value={slot.mode}
+                    onChange={(e) => {
+                      const nextSlots = settings.homepage_config.heroSlots.map(
+                        (item: HeroSlotDraft, i: number) =>
+                          i === index ? { ...item, mode: e.target.value } : item
+                      );
+                      setSettings({
+                        ...settings,
+                        homepage_config: {
+                          ...settings.homepage_config,
+                          heroSlots: nextSlots,
+                        },
+                      });
+                    }}
+                    className="input"
+                  >
+                    <option value="auto">Tự động</option>
+                    <option value="preorder">Ưu tiên pre-order</option>
+                    <option value="featured">Sản phẩm nổi bật</option>
+                  </select>
+                  <select
+                    value={slot.productId}
+                    onChange={(e) => {
+                      const nextSlots = settings.homepage_config.heroSlots.map(
+                        (item: HeroSlotDraft, i: number) =>
+                          i === index ? { ...item, productId: e.target.value } : item
+                      );
+                      setSettings({
+                        ...settings,
+                        homepage_config: {
+                          ...settings.homepage_config,
+                          heroSlots: nextSlots,
+                        },
+                      });
+                    }}
+                    className="input"
+                  >
+                    <option value="">— Tự động chọn sản phẩm —</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name} ({product.sku})
+                        {product.productType === "PRE_ORDER" ? " · Pre-order" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <p className="rounded-md border border-ink-200 bg-ink-50 px-3.5 py-3 text-[12px] leading-relaxed text-ink-600">
-            Ảnh mặc định lấy theo thứ tự: pre-order thứ 1, thứ 2, thứ 3... Nếu không có
-            pre-order, shop lấy sản phẩm bán chạy theo lượt mua. Nếu chỉ có 1 pre-order, ảnh
-            chính là pre-order và ảnh phụ là sản phẩm bán chạy tiếp theo. Tải ảnh xong bấm
-            “Lưu giao diện trang chủ” để áp dụng.
+            Thứ tự ưu tiên cho mỗi ô: sản phẩm cụ thể được chọn → ảnh hero tải lên (ô 1 và
+            2) → kiểu tự động (pre-order trước, rồi tới sản phẩm bán chạy). Các ô không
+            lấy trùng sản phẩm của nhau. Bấm “Lưu giao diện trang chủ” để áp dụng.
           </p>
 
           <button onClick={saveHomepage} disabled={saving} className="btn-primary">

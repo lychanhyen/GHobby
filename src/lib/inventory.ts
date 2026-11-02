@@ -155,6 +155,49 @@ export async function releaseStock(
   throw new Error("Loại sản phẩm không hợp lệ");
 }
 
+/**
+ * Tính lại giá vốn trung bình (bình quân gia quyền) của sản phẩm từ lịch sử nhập kho.
+ *
+ * Công thức: Σ(giá nhập lô × số lượng lô) / Σ(số lượng nhập)
+ * Chỉ tính các phiếu nhập thực tế (RESTOCK/IMPORT, số lượng > 0 và có ghi giá nhập).
+ * Kết quả được ghi vào Product.costPrice để báo cáo lợi nhuận luôn dùng giá vốn bình quân.
+ */
+export async function recalculateAverageCostPrice(
+  productId: string,
+  tx?: PrismaTransaction
+): Promise<number | null> {
+  const client = tx || prisma;
+
+  const importLogs = await client.inventoryLog.findMany({
+    where: {
+      productId,
+      quantityChange: { gt: 0 },
+      costPrice: { not: null },
+      changeType: { in: ["IMPORT", "RESTOCK"] },
+    },
+    select: { quantityChange: true, costPrice: true },
+  });
+
+  let totalQuantity = 0;
+  let totalCost = 0;
+  for (const log of importLogs) {
+    const quantity = log.quantityChange;
+    const price = log.costPrice ?? 0;
+    if (quantity <= 0) continue;
+    totalQuantity += quantity;
+    totalCost += quantity * price;
+  }
+
+  if (totalQuantity <= 0) return null;
+
+  const averageCostPrice = Math.round(totalCost / totalQuantity);
+  await client.product.update({
+    where: { id: productId },
+    data: { costPrice: averageCostPrice },
+  });
+  return averageCostPrice;
+}
+
 export async function importStock(
   productId: string,
   quantity: number,
@@ -173,20 +216,20 @@ export async function importStock(
 
   if (!product) throw new Error("Không tìm thấy sản phẩm");
 
-  const updateData: any = {
-    stockQuantity: { increment: quantity },
-  };
-
-  // Update product cost price to latest import price if provided
-  if (typeof costPrice === "number" && costPrice >= 0) {
-    updateData.costPrice = Math.round(costPrice);
-  }
+  // Giá nhập của lô này: dùng giá admin điền; nếu bỏ trống thì lấy giá vốn bình quân hiện tại.
+  const effectiveCostPrice =
+    typeof costPrice === "number" && Number.isFinite(costPrice) && costPrice >= 0
+      ? Math.round(costPrice)
+      : product.costPrice;
 
   const updated = await client.product.update({
     where: { id: productId },
-    data: updateData,
+    data: {
+      stockQuantity: { increment: quantity },
+    },
   });
 
+  // Lưu giá nhập của riêng phiếu này vào lịch sử kho.
   await client.inventoryLog.create({
     data: {
       productId,
@@ -195,14 +238,19 @@ export async function importStock(
       quantityChange: quantity,
       stockBefore: updated.stockQuantity - quantity,
       stockAfter: updated.stockQuantity,
-      costPrice: typeof costPrice === "number" && costPrice >= 0 ? Math.round(costPrice) : product.costPrice,
+      costPrice: effectiveCostPrice,
       performedBy: creatorName || "Admin",
       createdById: createdById || null,
       note: note || "Nhập kho",
     },
   });
 
-  return updated;
+  // Cập nhật lại giá vốn bình quân từ toàn bộ lịch sử nhập kho.
+  const averageCostPrice = await recalculateAverageCostPrice(productId, client);
+
+  return averageCostPrice === null
+    ? updated
+    : { ...updated, costPrice: averageCostPrice };
 }
 
 export async function adjustStock(

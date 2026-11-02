@@ -2,7 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Upload, X } from "lucide-react";
+import ProductImageUploader from "@/components/admin/ProductImageUploader";
+import { formatCurrencyVND } from "@/lib/utils";
+
+interface ProductFormState {
+  sku: string;
+  name: string;
+  categoryId: string;
+  brand: string;
+  scale: string;
+  series: string;
+  sellingPrice: number;
+  stockQuantity: number;
+  productType: string;
+  expectedReleaseDate: string;
+  preOrderLimit: number;
+  description: string;
+  isActive: boolean;
+}
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -12,22 +29,21 @@ export default function EditProductPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [images, setImages] = useState<string[]>([]);
+  const [currentCostPrice, setCurrentCostPrice] = useState<number>(0);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<ProductFormState>({
     sku: "",
     name: "",
     categoryId: "",
     brand: "",
     scale: "",
     series: "",
-    costPrice: 0,
     sellingPrice: 0,
     stockQuantity: 0,
-    minStockAlert: 2,
     productType: "IN_STOCK",
     expectedReleaseDate: "",
     preOrderLimit: 0,
-    imageUrl: "",
     description: "",
     isActive: true,
   });
@@ -35,13 +51,14 @@ export default function EditProductPage() {
   useEffect(() => {
     fetchCategories();
     fetchProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCategories = async () => {
     try {
       const res = await fetch("/api/admin/categories");
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (data?.success) {
         setCategories(data.data);
       }
     } catch (error) {
@@ -52,84 +69,82 @@ export default function EditProductPage() {
   const fetchProduct = async () => {
     try {
       const res = await fetch(`/api/admin/products/${productId}`);
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
         const product = data.data;
         setFormData({
-          sku: product.sku,
-          name: product.name,
-          categoryId: product.categoryId,
-          brand: product.brand,
-          scale: product.scale,
-          series: product.series,
-          costPrice: product.costPrice,
-          sellingPrice: product.sellingPrice,
-          stockQuantity: product.stockQuantity,
-          minStockAlert: product.minStockAlert,
-          productType: product.productType,
-          expectedReleaseDate: product.expectedReleaseDate ? new Date(product.expectedReleaseDate).toISOString().split('T')[0] : "",
-          preOrderLimit: product.preOrderLimit,
-          imageUrl: product.imageUrl,
-          description: product.description,
-          isActive: product.isActive,
+          sku: product.sku || "",
+          name: product.name || "",
+          categoryId: product.categoryId || "",
+          brand: product.brand || "",
+          scale: product.scale || "",
+          series: product.series || "",
+          sellingPrice: product.sellingPrice || 0,
+          stockQuantity: product.stockQuantity || 0,
+          productType: product.productType || "IN_STOCK",
+          expectedReleaseDate: product.expectedReleaseDate
+            ? new Date(product.expectedReleaseDate).toISOString().split("T")[0]
+            : "",
+          preOrderLimit: product.preOrderLimit || 0,
+          description: product.description || "",
+          isActive: product.isActive ?? true,
         });
+        setCurrentCostPrice(product.costPrice || 0);
+
+        // Ảnh: sản phẩm cũ chỉ có imageUrl -> coi imageUrl là ảnh chính.
+        const productImages: string[] = Array.isArray(product.images)
+          ? product.images.filter((url: unknown) => typeof url === "string" && url)
+          : [];
+        const initialImages =
+          productImages.length > 0
+            ? productImages
+            : product.imageUrl
+            ? [product.imageUrl]
+            : [];
+        setImages(initialImages);
       } else {
-        alert(data.message);
+        alert(data?.message || "Không tải được thông tin sản phẩm");
         router.push("/admin/san-pham");
       }
     } catch (error) {
       console.error("Error fetching product:", error);
+      setFormError("Không tải được thông tin sản phẩm");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    const formDataUpload = new FormData();
-    formDataUpload.append("file", file);
-
-    try {
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formDataUpload,
-      });
-      const data = await res.json();
-      if (data.success) {
-        setFormData({ ...formData, imageUrl: data.data.url });
-      } else {
-        alert(data.message);
-      }
-    } catch (error) {
-      alert("Lỗi khi tải ảnh lên");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    if (images.length === 0) {
+      setFormError("Sản phẩm cần có ít nhất một ảnh");
+      return;
+    }
+
     setSaving(true);
 
     try {
       const res = await fetch(`/api/admin/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          imageUrl: images[0],
+          images,
+        }),
       });
 
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
         alert("Cập nhật sản phẩm thành công");
         router.push("/admin/san-pham");
       } else {
-        alert(data.message);
+        setFormError(data?.message || "Cập nhật sản phẩm thất bại, vui lòng thử lại");
       }
-    } catch (error) {
-      alert("Có lỗi xảy ra");
+    } catch {
+      setFormError("Không thể kết nối tới máy chủ. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
@@ -252,39 +267,12 @@ export default function EditProductPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Giá vốn (VNĐ)</label>
-                <input
-                  type="number"
-                  value={formData.costPrice}
-                  onChange={(e) => setFormData({ ...formData, costPrice: parseInt(e.target.value) || 0 })}
-                  className="input"
-                />
-              </div>
-              <div>
                 <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Tiền cọc 10%</label>
                 <input
                   type="text"
                   value={depositAmount.toLocaleString("vi-VN") + " VNĐ"}
                   disabled
                   className="input bg-ink-50 text-ink-500"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Số lượng tồn kho</label>
-                <input
-                  type="number"
-                  value={formData.stockQuantity}
-                  onChange={(e) => setFormData({ ...formData, stockQuantity: parseInt(e.target.value) || 0 })}
-                  className="input"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Ngưỡng cảnh báo</label>
-                <input
-                  type="number"
-                  value={formData.minStockAlert}
-                  onChange={(e) => setFormData({ ...formData, minStockAlert: parseInt(e.target.value) || 2 })}
-                  className="input"
                 />
               </div>
               <div>
@@ -298,6 +286,26 @@ export default function EditProductPage() {
                   <option value="PRE_ORDER">Pre-order</option>
                 </select>
               </div>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-bold text-ink-700">Số lượng tồn kho</label>
+                <input
+                  type="number"
+                  value={formData.stockQuantity}
+                  onChange={(e) => setFormData({ ...formData, stockQuantity: parseInt(e.target.value) || 0 })}
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-ink-200 bg-ink-50 px-4 py-3">
+              <p className="text-xs font-bold text-ink-800">
+                Giá vốn trung bình: {formatCurrencyVND(currentCostPrice)} · chỉ đọc
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-ink-500">
+                Giá vốn được tính bình quân gia quyền từ toàn bộ lịch sử nhập kho (giá
+                nhập × số lượng của từng lô), nên mỗi lần nhập hàng bạn chỉ cần điền giá
+                nhập ở trang <span className="font-bold text-ink-700">Kho hàng</span>.
+              </p>
             </div>
 
             {formData.productType === "PRE_ORDER" && (
@@ -329,45 +337,16 @@ export default function EditProductPage() {
           </div>
         </div>
 
-        {/* Image Upload */}
+        {/* Images */}
         <div className="card">
           <div className="border-b border-ink-200 px-5 py-4">
             <h2 className="text-sm font-bold text-ink-900">Ảnh sản phẩm</h2>
+            <p className="mt-1 text-xs text-ink-500">
+              Ảnh đầu tiên là ảnh chính. Bấm vào ảnh con để đặt làm ảnh chính.
+            </p>
           </div>
-          <div className="space-y-4 p-5">
-            {formData.imageUrl ? (
-              <div className="relative h-48 w-48">
-                <img
-                  src={formData.imageUrl}
-                  alt="Product"
-                  className="h-full w-full rounded-lg border border-ink-200 object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, imageUrl: "" })}
-                  className="absolute -right-2 -top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-ink-950 text-white transition-colors hover:bg-accent-600"
-                  aria-label="Xóa ảnh sản phẩm"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <label className="flex h-48 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-ink-300 transition-colors hover:border-ink-400 hover:bg-ink-50">
-                <Upload className="mb-3 h-9 w-9 text-ink-400" strokeWidth={1.5} />
-                <p className="text-sm text-ink-500">
-                  <span className="font-bold text-ink-900">Nhấn để tải lên</span> hoặc kéo thả
-                </p>
-                <p className="mt-1 text-xs text-ink-400">PNG, JPG, WebP (Tối đa 5MB)</p>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                />
-              </label>
-            )}
-            {uploading && <p className="text-sm text-ink-500">Đang xử lý ảnh...</p>}
+          <div className="p-5">
+            <ProductImageUploader images={images} onChange={setImages} max={10} />
           </div>
         </div>
 
@@ -402,20 +381,21 @@ export default function EditProductPage() {
           </label>
         </div>
 
+        {formError && (
+          <p
+            role="alert"
+            className="rounded-md border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-800"
+          >
+            {formError}
+          </p>
+        )}
+
         {/* Actions */}
         <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="btn-outline"
-          >
+          <button type="button" onClick={() => router.back()} className="btn-outline">
             Hủy
           </button>
-          <button
-            type="submit"
-            disabled={saving || uploading || !formData.imageUrl}
-            className="btn-primary"
-          >
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? "Đang lưu..." : "Lưu thay đổi"}
           </button>
         </div>

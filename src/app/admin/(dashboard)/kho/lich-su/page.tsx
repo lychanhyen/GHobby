@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Package } from "lucide-react";
+import { formatCurrencyVND } from "@/lib/utils";
 
 export default function InventoryLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -150,13 +151,15 @@ export default function InventoryLogsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px]">
+            <table className="w-full min-w-[1120px]">
               <thead className="border-b border-ink-200 bg-ink-50 text-[11px] font-bold uppercase tracking-wide text-ink-500">
                 <tr>
                   <th className="px-4 py-3 text-left">Thời gian</th>
                   <th className="px-4 py-3 text-left">Sản phẩm</th>
                   <th className="px-4 py-3 text-left">Loại</th>
                   <th className="px-4 py-3 text-left">Số lượng</th>
+                  <th className="px-4 py-3 text-left">Giá nhập</th>
+                  <th className="px-4 py-3 text-left">Thành tiền</th>
                   <th className="px-4 py-3 text-left">Tồn sau</th>
                   <th className="px-4 py-3 text-left">Người thực hiện</th>
                   <th className="px-4 py-3 text-left">Ghi chú</th>
@@ -195,6 +198,16 @@ export default function InventoryLogsPage() {
                         {log.quantityChange > 0 ? "+" : ""}
                         {log.quantityChange}
                       </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-ink-600">
+                      {typeof log.costPrice === "number"
+                        ? formatCurrencyVND(log.costPrice)
+                        : "-"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-sm text-ink-600">
+                      {log.quantityChange > 0 && typeof log.costPrice === "number"
+                        ? formatCurrencyVND(log.quantityChange * log.costPrice)
+                        : "-"}
                     </td>
                     <td className="px-4 py-3.5 text-sm font-bold text-ink-900">{log.stockAfter}</td>
                     <td className="px-4 py-3.5 text-sm text-ink-600">{log.performedBy}</td>

@@ -51,6 +51,11 @@ export async function GET(req: NextRequest) {
         heroBadges: ["HG · RG · MG · PG", "Cọc 10%", "Đóng gói 5 lớp"],
         heroImageUrl: "",
         heroSecondaryImageUrl: "",
+        heroSlots: [
+          { mode: "auto", productId: "" },
+          { mode: "auto", productId: "" },
+          { mode: "auto", productId: "" },
+        ],
       },
       header_config: {
         categoryIds: [],
@@ -58,11 +63,19 @@ export async function GET(req: NextRequest) {
       },
     };
 
+    const homepageConfig = {
+      ...defaultSettings.homepage_config,
+      ...(settingsObj.homepage_config && typeof settingsObj.homepage_config === "object"
+        ? settingsObj.homepage_config
+        : {}),
+    };
+
     return NextResponse.json({
       success: true,
       data: {
         ...defaultSettings,
         ...settingsObj,
+        homepage_config: homepageConfig,
       },
     });
   } catch (error) {

@@ -53,10 +53,22 @@ export interface Product {
   preOrderLimit?: number;
   preOrderCount?: number;
   imageUrl: string;
+  /** Thư viện ảnh: phần tử đầu tiên là ảnh chính (trùng imageUrl). */
+  images?: string[];
   description: string;
   isActive: boolean;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+}
+
+/** Kiểu chọn sản phẩm cho ô ảnh hero trên trang chủ. */
+export type HeroSlotMode = "auto" | "preorder" | "featured";
+
+export interface HeroSlotConfig {
+  /** auto = tự động (pre-order trước, sau đó bán chạy), preorder = ưu tiên pre-order, featured = sản phẩm nổi bật (bán chạy) */
+  mode: HeroSlotMode;
+  /** ID sản phẩm cụ thể; để trống thì chọn tự động theo mode */
+  productId?: string;
 }
 
 export interface StoreSettings {
@@ -79,6 +91,8 @@ export interface StoreSettings {
   heroBadges?: string[];
   heroImageUrl?: string;
   heroSecondaryImageUrl?: string;
+  /** 3 ô ảnh hero: [0] ảnh lớn (chính), [1] ảnh phụ, [2] nền ô giao hỏa tốc */
+  heroSlots?: HeroSlotConfig[];
   // Danh mục hiển thị trên header
   headerCategoryIds?: string[];
   headerCategoryLimit?: number;
